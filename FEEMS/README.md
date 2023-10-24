@@ -215,17 +215,18 @@ print("n_samples={}, n_snps={}".format(genotypes.shape[0], genotypes.shape[1]))
 ```
 For preparing the graph inputs to run feems you have two options:
 
-1. Prepare your own input files \
+1. Prepare your own input files 
 2. Use the feems function prepare_graph_inputs which intersects a discrete global grid (DGG) with the sample range
 
 The tutorial runs through the latter option. More specifically *"We read the sample coordinates, coordinates of the outer polygon that defines the habitat of the sample and a discrete global grid file which has laid down a triangular grid that is uniformly spaced on earth. We then intersect this global grid with the outer file to define the graph that we use to optimize:"*
+
+Note that you can use this [website](http://www.birdtheme.org/useful/v3tool.html) to help generate the outer coordinates file 
 ```
 ## Wolf Data ##
 # setup graph
 coord = np.loadtxt("{}/wolvesadmix.coord".format(data_path))  # sample coordinates
 outer = np.loadtxt("{}/wolvesadmix.outer".format(data_path))  # outer coordinates
 
-Note that you can use this [website](http://www.birdtheme.org/useful/v3tool.html) to help generate the outer coordinates file 
 
 ##Kit Fox Data ##
 # setup graph
