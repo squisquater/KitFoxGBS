@@ -136,7 +136,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/pyqt-5.15.7-py38h6a678d5_1.conda
 https://conda.anaconda.org/conda-forge/linux-64/statsmodels-0.12.2-py38h6c62de6_0.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/matplotlib-3.2.2-0.conda
 ```
-Create the conda environment using this file
+Create the conda environment using this file and then activate it
 ```
 micromamba create --name feems --file feems.txt
 ```
@@ -153,19 +153,6 @@ cd feems
 pip install .
 ```
 
-
-
-
-## Create conda environment and install software
-```
-micromamba create --name feems
-micromamba activate feems
-micromamba install -c bioconda feems -c conda-forge
-
-## I realized later in the pipeline that you will likely need to install this as well
-micromamba install -c conda-forge pandas-plink
-```
-
 ## Example Tutorial
 See the following [notebook](https://github.com/NovembreLab/feems/blob/main/docsrc/notebooks/getting-started.ipynb) for an example workflow
 
@@ -173,14 +160,17 @@ See the following [notebook](https://github.com/NovembreLab/feems/blob/main/docs
 ```
 srun -p bmh --time=10:00:00 --nodes=1 --cpus-per-task 4 --mem 50GB --pty /bin/bash
 ```
-
+Activate the feems environment
+```
+micromamba activate feems
+```
 ## You'll need to open up the python interpreter
 ```
 python
 
 ## should see something like this
-Python 3.9.15 | packaged by conda-forge | (main, Nov 22 2022, 08:45:29) 
-[GCC 10.4.0] on linux
+Python 3.8.15 (default, Nov 24 2022, 15:19:38) 
+[GCC 11.2.0] :: Anaconda, Inc. on linux
 Type "help", "copyright", "credits" or "license" for more information.
 ```
 ## Import the required packages and feems
@@ -206,10 +196,18 @@ plt.rcParams["font.sans-serif"] = "Arial"
 ## Read in data
 ```
 data_path = pkg_resources.resource_filename("feems", "data/")
+
+#I'll use the same data path for the kit foxes
 ```
 ## Read the plink formatted genotype data and impute any missing SNPs with the mean at each SNP:
 ```
+## Wolf Data ##
 (bim, fam, G) = read_plink("{}/wolvesadmix".format(data_path))
+imp = SimpleImputer(missing_values=np.nan, strategy="mean")
+genotypes = imp.fit_transform((np.array(G)).T)
+
+## Kit Fox Data ##
+(bim, fam, G) = read_plink("{}/AllKF".format(data_path))
 imp = SimpleImputer(missing_values=np.nan, strategy="mean")
 genotypes = imp.fit_transform((np.array(G)).T)
 
@@ -217,14 +215,23 @@ print("n_samples={}, n_snps={}".format(genotypes.shape[0], genotypes.shape[1]))
 ```
 For preparing the graph inputs to run feems you have two options:
 
-Prepare your own input files
-Use the feems function prepare_graph_inputs which intersects a discrete global grid (DGG) with the sample range
+1. Prepare your own input files \
+2. Use the feems function prepare_graph_inputs which intersects a discrete global grid (DGG) with the sample range
 
 The tutorial runs through the latter option. More specifically *"We read the sample coordinates, coordinates of the outer polygon that defines the habitat of the sample and a discrete global grid file which has laid down a triangular grid that is uniformly spaced on earth. We then intersect this global grid with the outer file to define the graph that we use to optimize:"*
 ```
+## Wolf Data ##
 # setup graph
 coord = np.loadtxt("{}/wolvesadmix.coord".format(data_path))  # sample coordinates
 outer = np.loadtxt("{}/wolvesadmix.outer".format(data_path))  # outer coordinates
+
+Note that you can use this [website](http://www.birdtheme.org/useful/v3tool.html) to help generate the outer coordinates file 
+
+##Kit Fox Data ##
+# setup graph
+coord = np.loadtxt("{}/AllKF.coord".format(data_path))  # sample coordinates
+outer = np.loadtxt("{}/AllKF.outer".format(data_path))  # outer coordinates
+
 grid_path = "{}/grid_100.shp".format(data_path)  # path to discrete global grid
 
 # graph input files
@@ -241,7 +248,13 @@ sp_graph = SpatialGraph(genotypes, coord, grid, edges, scale_snps=True)
 ```
 
 ```
+## For Wolf Data ##
 projection = ccrs.EquidistantConic(central_longitude=-108.842926, central_latitude=66.037547)
+
+## For KitFox Data ##
+import cartopy.crs as ccrs
+projection = ccrs.AlbersEqualArea(central_longitude=-120, central_latitude=40,
+                                  standard_parallels=(34, 42))
 ```
 
 ```
@@ -259,6 +272,86 @@ v.draw_edges(use_weights=False)
 v.draw_obs_nodes(use_ids=False)
 
 # Save the figure to an output file
-fig.savefig("output.png")
+fig.savefig("output_spatialgraphobject.png")
+
+```
+
+## Fit feems
+Next we fit a the feems model where we allow a weight to be estimated for every edge, which is encoded in a large adjacency matrix , while encouraging nearby edges to be smooth. We initialize at the fit from the null model and fix the estimate of the residual variance for the more complex optimization:
+```
+sp_graph.fit(lamb = 20.0)
+```
+Now we can visualize the weighted graph:
+```
+fig = plt.figure(dpi=300)
+ax = fig.add_subplot(1, 1, 1, projection=projection)  
+v = Viz(ax, sp_graph, projection=projection, edge_width=.5, 
+        edge_alpha=1, edge_zorder=100, sample_pt_size=20, 
+        obs_node_size=7.5, sample_pt_color="black", 
+        cbar_font_size=10)
+v.draw_map()
+v.draw_edges(use_weights=True)
+v.draw_obs_nodes(use_ids=False) 
+v.draw_edge_colorbar()
+
+# Save the figure to an output file
+fig.savefig("output_fitfeems.png")
+```
+Lets now try a different regularization setting that isn't as smooth:
+```
+sp_graph.fit(lamb = 2.0)
+```
+```
+fig = plt.figure(dpi=300)
+ax = fig.add_subplot(1, 1, 1, projection=projection)  
+v = Viz(ax, sp_graph, projection=projection, edge_width=.5, 
+        edge_alpha=1, edge_zorder=100, sample_pt_size=20, 
+        obs_node_size=7.5, sample_pt_color="black", 
+        cbar_font_size=10)
+v.draw_map()
+v.draw_edges(use_weights=True)
+v.draw_obs_nodes(use_ids=False) 
+v.draw_edge_colorbar()
+
+# Save the figure to an output file
+fig.savefig("output_fitfeems_lam2.png")
+```
+
+## Choose a lamdda-value using cross-validation 
+```
+LoadCVFromDisk = False
+
+# define grid
+# Publication grid for this dataset
+#lamb_grid = np.geomspace(1e-6, 1e2, 20)[::-1]
+# Exploratory grid: 
+lamb_grid = np.geomspace(1e-4, 1e1, 10)[::-1]
+
+# run cross-validation
+if not LoadCVFromDisk:
+    cv_err = run_cv(sp_graph, lamb_grid, n_folds=sp_graph.n_observed_nodes, factr=1e10)
+    pickle.dump(cv_err,open("cv_err.pkl","wb"))
+```
+Plot the CV error
+```
+LoadCVFromDisk = TRUE
+if LoadCVFromDisk: 
+    cv_err = pickle.load(open("cv_err.pkl","rb"))
+    
+# average over folds
+mean_cv_err = np.mean(cv_err, axis=0)
+
+# argmin of cv error
+lamb_cv = float(lamb_grid[np.argmin(mean_cv_err)])
+
+fig, ax = plt.subplots(dpi=300)
+ax.plot(np.log10(lamb_grid), mean_cv_err, ".");
+ax.set_xlabel("log10(lambda)");
+ax.set_ylabel("L2 CV Error");
+ax.axvline(np.log10(lamb_cv), color = "orange")
+lamb_cv
+
+# Save the figure to an output file
+fig.savefig("output_CVerr.png")
 
 ```
