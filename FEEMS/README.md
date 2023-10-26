@@ -160,6 +160,17 @@ See the following [notebook](https://github.com/NovembreLab/feems/blob/main/docs
 ```
 srun -p bmh --time=10:00:00 --nodes=1 --cpus-per-task 4 --mem 50GB --pty /bin/bash
 ```
+
+Note that this tutorial uses an existing triangular gridcell (.shp file) that may not be suitable for the resolution of your study system. You can download other shapefiles that may be a better fit using the dggridR package. R has some incompatibilities with the feems conda environment so I created a separate environment to create and download the shapefiles I want.
+```
+micromamba create --name feems-R
+micromamba activate feems-R
+micromamba install -c conda-forge r-base
+micromamba install -c conda-forge r-dggridr
+micromamba install -c conda-forge r-dplyr
+```
+dbl checking my R script. Will Add later.
+
 Activate the feems environment
 ```
 micromamba activate feems
@@ -195,7 +206,10 @@ plt.rcParams["font.sans-serif"] = "Arial"
 ```
 ## Read in data
 ```
-data_path = pkg_resources.resource_filename("feems", "data/")
+#data_path = pkg_resources.resource_filename("feems", "data/")
+
+trying this...
+data_path = "/home/sophiepq/bin/feems/feems/data/"
 
 #I'll use the same data path for the kit foxes
 ```
@@ -208,6 +222,15 @@ genotypes = imp.fit_transform((np.array(G)).T)
 
 ## Kit Fox Data ##
 (bim, fam, G) = read_plink("{}/AllKF".format(data_path))
+imp = SimpleImputer(missing_values=np.nan, strategy="mean")
+genotypes = imp.fit_transform((np.array(G)).T)
+
+
+##(Note I ran this plink command to subset the broader KF plink file and remove monomorphic sites)
+##plink --bfile AllKF --keep SJKF_list.txt --allow-extra-chr --maf 0.05 --make-bed --out SJKF
+
+## SJKF Data ##
+(bim, fam, G) = read_plink("{}/SJKF".format(data_path))
 imp = SimpleImputer(missing_values=np.nan, strategy="mean")
 genotypes = imp.fit_transform((np.array(G)).T)
 
@@ -233,7 +256,20 @@ outer = np.loadtxt("{}/wolvesadmix.outer".format(data_path))  # outer coordinate
 coord = np.loadtxt("{}/AllKF.coord".format(data_path))  # sample coordinates
 outer = np.loadtxt("{}/AllKF.outer".format(data_path))  # outer coordinates
 
-grid_path = "{}/grid_100.shp".format(data_path)  # path to discrete global grid
+##SJKF Data ##
+# setup graph
+coord = np.loadtxt("{}/SJKF.coord".format(data_path))  # sample coordinates
+outer = np.loadtxt("{}/SJKF.outer".format(data_path))  # outer coordinates
+
+#grid_path = "{}/grid_100.shp".format(data_path)  # path to discrete global grid
+
+#grid_path = "{}/us_grid9_shapefile.shp".format(data_path)  # path to discrete global grid
+
+#grid_path = "{}/us_res9tri_shapefile.shp".format(data_path)  # path to discrete global grid
+
+grid_path = "{}/hexgrid10km.shp".format(data_path)
+grid_path = "{}/hexgrid5km.shp".format(data_path)
+
 
 # graph input files
 outer, edges, grid, _ = prepare_graph_inputs(coord=coord, 
@@ -256,6 +292,11 @@ projection = ccrs.EquidistantConic(central_longitude=-108.842926, central_latitu
 import cartopy.crs as ccrs
 projection = ccrs.AlbersEqualArea(central_longitude=-120, central_latitude=40,
                                   standard_parallels=(34, 42))
+
+## For SJKF Data ##
+import cartopy.crs as ccrs
+projection = ccrs.AlbersEqualArea(central_longitude=-119.624, central_latitude=35.602,
+                                  standard_parallels=(34, 42))
 ```
 
 ```
@@ -273,14 +314,14 @@ v.draw_edges(use_weights=False)
 v.draw_obs_nodes(use_ids=False)
 
 # Save the figure to an output file
-fig.savefig("output_spatialgraphobject.png")
+fig.savefig(f"{data_path}/output_spatialgraphobject_SJKF_hexgrid5km.png")
 
 ```
 
 ## Fit feems
 Next we fit a the feems model where we allow a weight to be estimated for every edge, which is encoded in a large adjacency matrix , while encouraging nearby edges to be smooth. We initialize at the fit from the null model and fix the estimate of the residual variance for the more complex optimization:
 ```
-sp_graph.fit(lamb = 20.0)
+sp_graph.fit(lamb = 2.0)
 ```
 Now we can visualize the weighted graph:
 ```
@@ -289,16 +330,22 @@ ax = fig.add_subplot(1, 1, 1, projection=projection)
 v = Viz(ax, sp_graph, projection=projection, edge_width=.5, 
         edge_alpha=1, edge_zorder=100, sample_pt_size=20, 
         obs_node_size=7.5, sample_pt_color="black", 
-        cbar_font_size=10)
+        cbar_font_size=5, cbar_ticklabelsize=5)
+
+# Adjust colorbar properties
+v.cbar_width = "100%"  # Adjust width
+v.cbar_height = "10%"  # Adjust height
+v.cbar_bbox_to_anchor = (0.03, 0.05, 0.2, 0.3)  # Adjust position
+
 v.draw_map()
 v.draw_edges(use_weights=True)
 v.draw_obs_nodes(use_ids=False) 
 v.draw_edge_colorbar()
 
 # Save the figure to an output file
-fig.savefig("output_fitfeems.png")
+fig.savefig(f"{data_path}/output_fitfeems_lam2_SJKF_hexgrid5km.pdf")
 ```
-Lets now try a different regularization setting that isn't as smooth:
+
 ```
 sp_graph.fit(lamb = 2.0)
 ```
@@ -315,7 +362,7 @@ v.draw_obs_nodes(use_ids=False)
 v.draw_edge_colorbar()
 
 # Save the figure to an output file
-fig.savefig("output_fitfeems_lam2.png")
+fig.savefig(f"{data_path}/output_fitfeems_lam2_Wolf_grid100.png")
 ```
 
 ## Choose a lamdda-value using cross-validation 
