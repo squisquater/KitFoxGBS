@@ -403,3 +403,31 @@ lamb_cv
 fig.savefig("output_CVerr.png")
 
 ```
+
+I would like to be able to export the spatial graph as a shapefile so I can load it in GIS or play around with it using R and other layers. I think the best way to do this is using geopandas but there are incompatibilities between geopandas and my current feems environment. I tried to export the sptail graph and convert it using a different conda environment but I can't 'unpickle' aka reload the object without feems... Below is what I tried...
+1) Export to spatial graph object using *pickle* which is built into base python
+```
+import pickle
+
+with open('/home/sophiepq/bin/feems/feems/data/spatialgraphobject_SJKF_hexgrid5km.pkl', 'wb') as f:
+  pickle.dump(sp_graph, f)
+```
+2) Create a separate conda environment called 'feems_plot' and load geopandas there.
+```
+micromamba create --name feems_plot
+micromamba activate feems_plot
+micromamba install -c conda-forge geopandas
+```
+3) Load back in the sp_graph
+```
+import pickle
+
+with open('/home/sophiepq/bin/feems/feems/data/spatialgraphobject_SJKF_hexgrid5km.pkl', 'rb') as f:
+    sp_graph = pickle.load(f)
+
+### ERROR ###
+Traceback (most recent call last):
+  File "<stdin>", line 2, in <module>
+ModuleNotFoundError: No module named 'feems'
+```
+
