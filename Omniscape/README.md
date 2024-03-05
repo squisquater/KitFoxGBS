@@ -29,9 +29,12 @@ You should see a command prompt returned like this
 
 julia>
 ```
-Install the omniscape package using Julia
+Install the omniscape package using Julia (you should only need to do this the first time.
 ```
 using Pkg; Pkg.add(["Omniscape", "Rasters", "Plots"])
+```
+Load the packages
+```
 using Omniscape, Rasters, Plots
 ```
 
