@@ -86,23 +86,22 @@ Now, load the array using Omniscape's internal read_raster() function or a funct
 land_cover, wkt, transform = Omniscape.read_raster("nlcd_2016_frederick_md.tif", Float64)
 ```
 The next step is to create a resistance reclassification table that defines a resistance value for each land cover value. Land cover values go in the left column, and resistance values go in the right column. In this case, we are modeling forest connectivity, so forest classes receive the lowest resistance score of one. Other "natural" land cover types are assigned moderate values, and human-developed land cover types are assigned higher values. Medium- to high-intensity development are given a value of missing, which denotes infinite resistance (absolute barriers to movement).
+
 ```
 reclass_table = [
-    11.	100; # Water
-    21	500; # Developed, open space
-    22	1000; # Developed, low intensity
-    23	missing; # Developed, medium intensity
-    24	missing; # Developed, high intensity
-    31	100; # Barren land
-    41	1; # Deciduous forest
-    42	1; # Evergreen forest
-    43	1; # Mixed forest
-    52	20; # Shrub/scrub
-    71	30; # Grassland/herbaceous
-    81	200; # Pasture/hay
-    82	300; # Cultivated crops
-    90	20; # Woody wetlands
-    95	30; # Emergent herbaceous wetlands
+    0 missing; # Water or Forested 
+    5 950; 
+    10 900; 
+    15 850; 
+    20 800; 
+    30 700; 
+    40 600;
+    50 500;
+    60 400;
+    80 200;
+    85 150;
+    90 100;
+    95 50;
 ]
 ```
 Next, we define the configuration options for this model run.
@@ -110,9 +109,9 @@ Next, we define the configuration options for this model run.
 config = Dict{String, String}(
     "radius" => "100",
     "block_size" => "21",
-    "project_name" => "md_nlcd_omniscape_output",
+    "project_name" => "KF_omniscape_output",
     "source_from_resistance" => "true",
-    "r_cutoff" => "1", # Only forest pixels should be sources
+    "r_cutoff" => "50", # Only HighQuality Habitat should be a source
     "reclassify_resistance" => "true",
     "calc_normalized_current" => "true",
     "calc_flow_potential" => "true"
@@ -160,3 +159,87 @@ plot(normalized_current,
 
 savefig("normalized_current.png")
 ```
+
+## Now let's work through some kit fox data!
+
+Load in the .tif file and plot it
+```
+plot(Raster("KitFox-ESARPmodel-Raster30x30-NEWmod01.tif"), title = "KitFoxSuitModel", xlabel = "Easting", ylabel = "Northing", size = (700,640))
+
+savefig("KitFoxSuitModel.png")
+```
+Load the array using Omniscape's internal read_raster() function 
+```
+land_cover_KF, wkt, transform = Omniscape.read_raster("KitFox-ESARPmodel-Raster30x30-NEWmod01.tif", Float64)
+```
+Create a resistance reclassification table. Not sure whether this is necessary since I already have my data classified continuously but I want to convert the 0 entries to missing which will prohibit current from movign through these areas. This includes only water and forested areas as per the habitat suitability model from Cypher et al. 2013.
+
+Note: I used the following code in the QGIC python console to print out all the unique raster values
+```
+from osgeo import gdal
+import numpy as np
+
+dataset = gdal.Open('path/to/your/raster/file.tif')
+band = dataset.GetRasterBand(1)
+array = band.ReadAsArray()
+unique_values = np.unique(array)
+print(unique_values)
+
+#[  0.   5.  10.  15.  20.  30.  40.  50.  60.  80.  85.  90.  95.]
+```
+
+```
+reclass_table = [
+    1. missing; # Water or Forested
+    5 950; 
+    10 900; 
+    15 850; 
+    20 800; 
+    30 700; 
+    40 600;
+    50 500;
+    60 400;
+    80 200;
+    85 150;
+    90 100;
+    95 50;
+]
+```
+Next, we define the configuration options for this model run.
+Note that for animals, the radius should correspond to a typical dispersal distance or the distance an animal is expected to move within its habitat to access resources.
+The radius is in grid cells. Our raster layer is 
+```
+config = Dict{String, String}(
+    "radius" => "260",
+    "block_size" => "195",
+    "project_name" => "kf_omniscape_output",
+    "source_from_resistance" => "true",
+    "r_cutoff" => "50", # Only high quality pixels should be sources
+    "reclassify_resistance" => "true",
+    "calc_normalized_current" => "true",
+    "calc_flow_potential" => "true",
+    "write_reclassified_resistance"=> "true"
+)
+
+```
+Finally, compute connectivity using run_omniscape()
+```
+currmap, flow_pot, norm_current = run_omniscape(config,
+                                                land_cover_KF,
+                                                reclass_table = reclass_table,
+                                                wkt = wkt,
+                                                geotransform = transform,
+                                                write_outputs = true)
+```
+Now plot the current
+```
+current = Raster("kf_omniscape_output_2/cum_currmap.tif")
+plot(current,
+     title = "Cumulative Current Flow", xlabel = "Easting", ylabel = "Northing",
+     seriescolor = cgrad(:inferno, [0, 0.005, 0.03, 0.06, 0.09, 0.14]),
+     size = (600, 550))
+
+savefig("KFcurrent.png")
+```
+
+
