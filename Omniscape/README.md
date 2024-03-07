@@ -242,4 +242,25 @@ plot(current,
 savefig("KFcurrent.png")
 ```
 
+Next map flow potential. This shows what connectivity looks like under "null" conditions (resistance equals 1 for the whole landscape).
+```
+fp = Raster("kf_omniscape_output/flow_potential.tif")
+plot(fp,
+     title = "Flow Potential", xlabel = "Easting", ylabel = "Northing",
+     seriescolor = cgrad(:inferno, [0, 0.005, 0.03, 0.06, 0.09, 0.14]),
+     size = (700, 640))
 
+savefig("KFflow_potential.png")
+```
+
+Finally, map normalized current flow, which is calculated as cumulative current divided by flow potential.
+```
+normalized_current = Raster("kf_omniscape_output/normalized_cum_currmap.tif")
+
+plot(normalized_current,
+     title = "Normalized Current Flow", xlabel = "Easting", ylabel = "Northing",
+     seriescolor = cgrad(:inferno, [0, 0.005, 0.03, 0.06, 0.09, 0.14]),
+     size = (700, 640))
+
+savefig("KFnormalized_current.png")
+```
