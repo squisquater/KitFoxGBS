@@ -1,5 +1,5 @@
 # Sample Mapping
-
+```
 library(dplyr)
 library(sf)
 library(rnaturalearth)
@@ -30,3 +30,4 @@ centroids <- data_sf %>%
   summarize(geometry = st_centroid(st_combine(geometry))) %>%
   mutate(longitude = st_coordinates(geometry)[, 1],
          latitude = st_coordinates(geometry)[, 2])
+```
