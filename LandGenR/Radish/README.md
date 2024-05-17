@@ -1,3 +1,4 @@
+```
 library(radish)
 library(raster)
 
@@ -92,4 +93,4 @@ anova(fit_mlpe, fit_mlpe_interaction)
 fit_mlpe_ibd <- radish(melip.Fst ~ 1, surface, 
                        radish::loglinear_conductance, radish::mlpe)
 anova(fit_mlpe, fit_mlpe_ibd)
-
+```
