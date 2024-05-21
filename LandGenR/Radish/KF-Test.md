@@ -120,60 +120,112 @@ fit_nnls <- radish(melip.Fst ~ forestcover + altitude, surface,
                    radish::loglinear_conductance, radish::leastsquares)
 summary(fit_nnls)
 
+> summary(fit_nnls)
+Conductance surface with 69553 vertices (11 focal) estimated by maximum likelihood
+Call:   radish(formula = chord_dist_matrix ~ kfsuit, data = surface, 
+    conductance_model = radish::loglinear_conductance, measurement_model = radish::leastsquares)
+
+Loglikelihood: 154.8743 (4 degrees freedom)
+AIC: -301.7485 
+
+Number of function calls: 32 
+Number of Newton-Raphson steps: 7 
+Norm of gradient at MLE: 2.415845e-13 
+
+Nuisance parameters:
+ alpha    beta     tau  
+0.1329  0.1571  6.6318  
+
+Coefficients:
+       Estimate Std. Error z value Pr(>|z|)   
+kfsuit  -0.6854     0.2205  -3.108  0.00188 **
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
 # refit with with a different measurement model that models
 # dependence among pairwise measurements (radish::mlpe)
-fit_nnls <- radish(chord_dist ~ kfsuit, surface, 
-                   radish::loglinear_conductance, radish::leastsquares)
+fit_mlpe <- radish(chord_dist_matrix ~ kfsuit, surface, 
+                   radish::loglinear_conductance, radish::mlpe)
 summary(fit_mlpe)
 
+> summary(fit_mlpe)
+Conductance surface with 69553 vertices (11 focal) estimated by maximum likelihood
+Call:   radish(formula = chord_dist_matrix ~ kfsuit, data = surface, 
+    conductance_model = radish::loglinear_conductance, measurement_model = radish::mlpe)
+
+Loglikelihood: 200.6914 (5 degrees freedom)
+AIC: -391.3828 
+
+Number of function calls: 13 
+Number of Newton-Raphson steps: 4 
+Norm of gradient at MLE: 4.950834e-07 
+
+Nuisance parameters:
+ alpha    beta     tau     rho  
+0.1580  0.3843  5.9903  3.2324  
+
+Coefficients:
+       Estimate Std. Error z value Pr(>|z|)    
+kfsuit   1.0167     0.3046   3.338 0.000844 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
 # visualisation:
-png("Optimized Resistance Distance.png", width = 800, height = 600)
-plot(fitted(fit_mlpe, "distance"), melip.Fst, pch = 19,
-     xlab = "Optimized resistance distance", ylab = "Fst")
+png("KF Optimized Resistance Distance.png", width = 800, height = 600)
+plot(fitted(fit_mlpe, "distance"), chord_dist_matrix, pch = 19,
+     xlab = "Optimized resistance distance", ylab = "chord distance")
 dev.off()
 
 # visualise estimated conductance surface and asymptotic confidence intervals
 fitted_conductance <- conductance(surface, fit_mlpe, quantile = 0.95)
 
-png("FittedConductance.png", width = 800, height = 600)
+png("KF FittedConductance.png", width = 800, height = 600)
 plot(fitted_conductance[["est"]], 
-     main = "Fitted conductance surface\n(forestcover + altitude)")
+     main = "Fitted conductance surface\n(kfsuit)")
+dev.off()
+
+png("KF FittedConductance Lower95.png", width = 800, height = 600)
 plot(fitted_conductance[["lower95"]], 
      main = "Fitted conductance surface\n(lower 95% CI)")
+dev.off()
+
+png("KF FittedConductance Upper95.png", width = 800, height = 600)
 plot(fitted_conductance[["upper95"]], main = 
      "Fitted conductance surface\n(upper 95% CI)")
 dev.off()
 
 # visualise likelihood surface across grid (takes awhile)
-theta <- as.matrix(expand.grid(forestcover=seq(-1,1,length.out=21), 
-                               altitude=seq(-1,1,length.out=21)))
-grid <- radish_grid(theta, melip.Fst ~ forestcover + altitude, surface,
+theta <- as.matrix(expand.grid(kfsuit=seq(-1,1,length.out=21)))
+grid <- radish_grid(theta, chord_dist_matrix ~ kfsuit, surface,
                     radish::loglinear_conductance, radish::mlpe)
 
 library(ggplot2)
-png("LikelihoodSurface.png", width = 800, height = 600)
+png("KF LikelihoodSurface.png", width = 800, height = 600)
 ggplot(data.frame(loglik=grid$loglik, grid$theta), 
-       aes(x=forestcover, y=altitude)) + 
+       aes(x=kfsuit, y=kfsuit)) + 
   geom_tile(aes(fill=loglik)) + 
   geom_contour(aes(z=loglik), color="black") +
   annotate(geom = "point", colour = "red",
-           x = coef(fit_mlpe)["forestcover"], 
-           y = coef(fit_mlpe)["altitude"]) +
+           x = coef(fit_mlpe)["kfsuit"], 
+           y = coef(fit_mlpe)["kfsuit"]) +
   theme_bw() +
-  xlab(expression(theta[altitude])) +
-  ylab(expression(theta[forestcover]))
+  xlab(expression(theta[kfsuit])) +
+  ylab(expression(theta[kfsuit]))
 dev.off()
 
 # calculate resistance distances across grid
-distances <- radish_distance(theta, ~forestcover + altitude, 
+distances <- radish_distance(theta, ~ kfsuit, 
                              surface, radish::loglinear_conductance)
 
-ibd <- which(theta[,1] == 0 & theta[,2] == 0)
+#ibd <- which(theta[,1] == 0 & theta[,2] == 0) ## this would be if I had two layers
+ibd <- which(theta[,1] == 0)
 
-png("Null Resistance Distance.png", width = 800, height = 600)
-plot(distances$distance[,,ibd], melip.Fst, pch = 19, 
-     xlab = "Null resistance distance (IBD)", ylab = "Fst")
+png("KF Null Resistance Distance.png", width = 800, height = 600)
+plot(distances$distance[,,ibd], chord_dist_matrix, pch = 19, 
+     xlab = "Null resistance distance (IBD)", ylab = "Chord Distance")
 dev.off()
+
+#### Again I'll do this when I have multiple layers
 # model selection:
 # fit a reduced model without "forestcover" covariate, and compare to 
 # full model via a likelihood ratio test
@@ -186,8 +238,19 @@ fit_mlpe_interaction <- radish(melip.Fst ~ forestcover * altitude, surface,
                                radish::loglinear_conductance, radish::mlpe)
 anova(fit_mlpe, fit_mlpe_interaction)
 
+#####
 # test against null model of IBD
-fit_mlpe_ibd <- radish(melip.Fst ~ 1, surface, 
+fit_mlpe_ibd <- radish(chord_dist_matrix ~ 1, surface, 
                        radish::loglinear_conductance, radish::mlpe)
 anova(fit_mlpe, fit_mlpe_ibd)
+
+> anova(fit_mlpe, fit_mlpe_ibd)
+Likelihood ratio test
+Null: ~ 1
+Alt: ~ kfsuit
+     logLik Df  ChiSq Df(ChiSq) Pr(>Chi)  
+Null 197.42  4                            
+Alt  200.69  5 6.5441         1  0.01052 *
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 ```
