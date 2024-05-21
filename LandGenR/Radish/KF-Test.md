@@ -242,7 +242,24 @@ anova(fit_mlpe, fit_mlpe_interaction)
 # test against null model of IBD
 fit_mlpe_ibd <- radish(chord_dist_matrix ~ 1, surface, 
                        radish::loglinear_conductance, radish::mlpe)
-anova(fit_mlpe, fit_mlpe_ibd)
+
+> summary(fit_mlpe_ibd)
+Conductance surface with 69553 vertices (11 focal) estimated by maximum likelihood
+Call:   radish(formula = chord_dist_matrix ~ 1, data = surface, conductance_model = radish::loglinear_conductance, 
+    measurement_model = radish::mlpe)
+
+Loglikelihood: 197.4194 (4 degrees freedom)
+AIC: -386.8387 
+
+Number of function calls: 1 
+Number of Newton-Raphson steps: 0 
+Norm of gradient at MLE: NA 
+
+Nuisance parameters:
+ alpha    beta     tau     rho  
+0.1288  0.2663  6.3520  2.5914  
+
+No coefficients
 
 > anova(fit_mlpe, fit_mlpe_ibd)
 Likelihood ratio test
