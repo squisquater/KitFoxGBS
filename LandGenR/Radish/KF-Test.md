@@ -1,3 +1,5 @@
+Some comments on generating raster layers. I did this in QGIS. made sure they were the same extent and that cells were the same size (1km). I also needed to add in background values (0) for the roads layer and did this using Processing Toolbox > Raster Tools > Fill NoData cells. 
+
 ```
 library(adegenet)
 library(radish)
@@ -81,18 +83,26 @@ data.genind
 
 genpop_obj <- genind2genpop(data.genind)
 
+genpop_obj
+
 chord_dist <- dist.genpop(genpop_obj, method = 2, diag = TRUE, upper = TRUE)
 
 # convert to matrix
 chord_dist_matrix <- as.matrix(chord_dist)
+
+# write to an external file for future use.
+write.table(chord_dist_matrix, file = "KF_chord_dist_matrix.txt", sep = "\t", row.names = TRUE, quote = FALSE)
 
 #################################################################################
 
 # Run Radish
 myRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/KitFox-ESARPmodel-Raster1000x1000.tif")
 
+roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/CaliforniaRoads-Reprojected-1000x1000-FillAllCells.tif")
+
 # scaling spatial covariates helps avoid numeric overflow
-covariates <- raster::stack(list(kfsuit = raster::scale(myRaster)))
+covariates <- raster::stack(list(kfsuit = raster::scale(myRaster),
+                                roads = raster::scale(roadRaster)))
 
 #Load in spatial points dataframe
 df <- data.frame(lon = c(-119.063, -118.769, -120.301, -119.836, -120.263, -119.607, -120.878, -120.749, -119.579, -119.462, -120.043), lat = c(35.366, 35.354, 35.85, 35.174, 36.187, 35.375, 36.644, 36.569, 35.691, 35.139, 35.372))
@@ -114,9 +124,14 @@ plot(covariates[["kfsuit"]])
 points(df_points, pch = 19)
 dev.off()
 
+png("roads.png", width = 800, height = 600)
+plot(covariates[["roads"]])
+points(df_points, pch = 19)
+dev.off()
+
 surface <- conductance_surface(covariates, df_points, directions = 8)
 
-fit_nnls <- radish(melip.Fst ~ forestcover + altitude, surface, 
+fit_nnls <- radish(chord_dist_matrix ~ kfsuit + roads, surface, 
                    radish::loglinear_conductance, radish::leastsquares)
 summary(fit_nnls)
 
@@ -144,7 +159,7 @@ Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’
 
 # refit with with a different measurement model that models
 # dependence among pairwise measurements (radish::mlpe)
-fit_mlpe <- radish(chord_dist_matrix ~ kfsuit, surface, 
+fit_mlpe <- radish(chord_dist_matrix ~ kfsuit + roads, surface, 
                    radish::loglinear_conductance, radish::mlpe)
 summary(fit_mlpe)
 
