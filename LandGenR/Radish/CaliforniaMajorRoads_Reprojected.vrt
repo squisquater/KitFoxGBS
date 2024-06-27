@@ -1,0 +1,37 @@
+<OGRVRTDataSource>
+    <OGRVRTLayer name="CaliforniaMajorRoads_Reprojected">
+        <SrcDataSource>CaliforniaMajorRoads_Reprojected.shp</SrcDataSource>
+        <GeometryType>wkbLineString</GeometryType>
+        <LayerSRS>EPSG:3310</LayerSRS>
+        <Field name="OBJECTID" type="Real" width="20" precision="0"/>
+        <Field name="STATEFP" type="String" width="254"/>
+        <Field name="COUNTYFP" type="String" width="254"/>
+        <Field name="COUNTYNS" type="String" width="254"/>
+        <Field name="TLID" type="Real" width="20" precision="0"/>
+        <Field name="TFIDL" type="Real" width="20" precision="0"/>
+        <Field name="TFIDR" type="Real" width="20" precision="0"/>
+        <Field name="MTFCC" type="String" width="254"/>
+        <Field name="FULLNAME" type="String" width="254"/>
+        <Field name="SMID" type="String" width="254"/>
+        <Field name="LFROMADD" type="String" width="254"/>
+        <Field name="LTOADD" type="String" width="254"/>
+        <Field name="RFROMADD" type="String" width="254"/>
+        <Field name="RTOADD" type="String" width="254"/>
+        <Field name="ZIPL" type="String" width="254"/>
+        <Field name="ZIPR" type="String" width="254"/>
+        <Field name="FEATCAT" type="String" width="254"/>
+        <Field name="HYDROFLG" type="String" width="254"/>
+        <Field name="RAILFLG" type="String" width="254"/>
+        <Field name="ROADFLG" type="String" width="254"/>
+        <Field name="OLFFLG" type="String" width="254"/>
+        <Field name="PASSFLG" type="String" width="254"/>
+        <Field name="DIVROAD" type="String" width="254"/>
+        <Field name="EXTTYP" type="String" width="254"/>
+        <Field name="TTYP" type="String" width="254"/>
+        <Field name="DECKEDROAD" type="String" width="254"/>
+        <Field name="ARTPATH" type="String" width="254"/>
+        <Field name="Shape_Leng" type="Real" width="24" precision="15"/>
+        <Field name="road_size" type="Integer64" width="10"/>
+        <Field name="road_size2" type="Integer64" width="10"/>
+    </OGRVRTLayer>
+</OGRVRTDataSource>
