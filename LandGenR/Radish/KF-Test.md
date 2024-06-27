@@ -1,4 +1,4 @@
-Some comments on generating raster layers. I did this in QGIS. made sure they were the same extent and that cells were the same size (1km). I also needed to add in background values (0) for the roads layer and did this using Processing Toolbox > Raster Tools > Fill NoData cells. 
+Some comments on generating raster layers. I initially did this in QGIS but was running into some really weird issues where converting linear features (roads) to raster cells was resulting in gaps in my raster layer that seemed like they would cause problems for modeling resistance and current.... I ended up using 'gdal' and it worked great and was pretty straightforward. See [RasterizingData.md]() for notes on how to ensure all raster layers are the same resolution and extent.
 
 ```
 library(adegenet)
