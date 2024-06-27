@@ -3,6 +3,7 @@ This file has instructions for how to prepare your spatial data to be run in a l
 I already have a rasterized habitat suitability model I will be using and my goal here is to take a road shapefile layer and rasterize it so that it has the same extent and resoltuion as my habitat suitability model.
 
 Habitat Suitability Model Raster Layer - KitFox-ESARPmodel-Raster1000x1000.tif
+<img align="center" src="/KitFox-ESARPmodel-Raster1000x1000.png" width="500">
 
 California Major Roads Shapefile - CaliforniaMajorRoads_Reprojected.shp
 
