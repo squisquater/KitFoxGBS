@@ -339,14 +339,14 @@ dev.off()
 
 ```
 ## Plot fitted conductance surface
+```
 fitted_conductance <- conductance(surface, fit_mlpe, quantile = 0.95)
 
 png("KF Fitted Conductance - Full Model No Carrizo - 20240628.png", width = 800, height = 600)
 plot(log(fitted_conductance[["est"]]), 
      main = "Fitted conductance surface\n(kfsuit + roads)")
 dev.off()
-
-
+```
 
 ############### OLD IGNORE FOR NOW !!! ####################
 
