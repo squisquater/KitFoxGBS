@@ -117,7 +117,7 @@ covariates <- raster::stack(list(kfsuit = raster::scale(myRaster),
                                 roads = raster::scale(roadRaster)))
 
 
-## Trying just the Major roads because I was getting a weird inverse relationship compared to what I expected.
+## Also trying just the Major roads because I was getting a weird inverse relationship compared to what I expected.
 covariates <- raster::stack(list(roads = raster::scale(roadRaster)))
                                 
 
@@ -180,11 +180,17 @@ Correlation of Coefficients:
              kfsuit
 roads -4.991564e-05
 
+### This is the model summary for habitat suitability alone (no kf suit or minor roads)
+
+
 
 
 ### This is the model summary for just the major roads alone (no kf suit or minor roads)
 
-### This is the model summary for the kfsuit and roads (Major + Minor) combined ###
+
+
+
+### This is the model summary for the kfsuit and all roads (Major + Minor) combined ###
 > summary(fit_nnls)
 Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
 Call:   radish(formula = chord_dist_matrix ~ kfsuit + roads, data = surface, 
