@@ -95,6 +95,13 @@ write.table(chord_dist_matrix, file = "KF_chord_dist_matrix.txt", sep = "\t", ro
 
 #################################################################################
 
+# If you are starting from this point and need to load your distance matrix you can do so with the following line of code.
+# Read the file into a data frame
+chord_dist_df <- read.table("KF_chord_dist_matrix.txt", sep = "\t", header = TRUE, row.names = 1)
+
+# Convert the data frame to a matrix
+chord_dist_matrix <- as.matrix(chord_dist_df)
+
 # Run Radish
 myRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/KitFox-ESARPmodel-Raster1000x1000-FillAllCells.tif")
 
@@ -145,6 +152,34 @@ fit_nnls <- radish(chord_dist_matrix ~ kfsuit + roads, surface,
                    radish::loglinear_conductance, radish::leastsquares)
 
 summary(fit_nnls)
+
+### This is the model summary for the kfsuit and Major roads (new raster layer) ###
+Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
+Call:   radish(formula = chord_dist_matrix ~ kfsuit + roads, data = surface, 
+    conductance_model = radish::loglinear_conductance, measurement_model = radish::leastsquares)
+
+Loglikelihood: 154.7984 (5 degrees freedom)
+AIC: -299.5968 
+
+Number of function calls: 33 
+Number of Newton-Raphson steps: 9 
+Norm of gradient at MLE: 0.0004767941 
+
+Nuisance parameters:
+ alpha    beta     tau  
+0.0887  0.3027  6.6290  
+
+Coefficients:
+       Estimate Std. Error z value Pr(>|z|)   
+kfsuit  -0.3482     0.1318  -2.641  0.00826 **
+roads   -1.7776   511.6885  -0.003  0.99723   
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Coefficients:
+             kfsuit
+roads -4.991564e-05
+
 
 
 ### This is the model summary for just the major roads alone (no kf suit or minor roads)
