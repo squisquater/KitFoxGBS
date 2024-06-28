@@ -166,7 +166,6 @@ Note that radish has different models that you can implement for estimating cond
 but the MPLE model i
 * Otherwise I recommend the MLPE model which is more computationally intensive but better equiped to handle complex relaionships in your data.
 
-
 **This is modeling kit fox habitat suitability with the new highway layer I made in 'gdal'**
 ```
 fit_mlpe_full <- radish(chord_dist_matrix ~ kfsuit + roads, surface, 
