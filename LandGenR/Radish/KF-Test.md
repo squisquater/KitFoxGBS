@@ -182,15 +182,42 @@ roads -4.991564e-05
 
 ### This is the model summary for habitat suitability alone (no kf suit or minor roads)
 
+fit_nnls <- radish(chord_dist_matrix ~ kfsuit, surface, 
+                   radish::loglinear_conductance, radish::leastsquares)
+
+summary(fit_nnls)
 
 
 
-### This is the model summary for just the major roads alone (no kf suit or minor roads)
+### This is the model summary for just the major roads (New Raster) alone (no kf suit or minor roads)
+
+fit_nnls <- radish(chord_dist_matrix ~ roads, surface, 
+                   radish::loglinear_conductance, radish::leastsquares)
+
+summary(fit_nnls)
+
+> summary(fit_nnls)
+Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
+Call:   radish(formula = chord_dist_matrix ~ roads, data = surface, conductance_model = radish::loglinear_conductance, 
+    measurement_model = radish::leastsquares)
+
+Loglikelihood: 151.6514 (4 degrees freedom)
+AIC: -295.3028 
+
+Number of function calls: 7 
+Number of Newton-Raphson steps: 2 
+Norm of gradient at MLE: 1.694062e-12 
+
+Nuisance parameters:
+ alpha    beta     tau  
+0.1363  1.0905  6.5146  
+
+Coefficients:
+        Estimate Std. Error z value Pr(>|z|)
+roads     -11.69 1486025.80       0        1
 
 
-
-
-### This is the model summary for the kfsuit and all roads (Major + Minor) combined ###
+### This is the model summary for the kfsuit and all roads (Major + Minor - new raster) combined ###
 > summary(fit_nnls)
 Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
 Call:   radish(formula = chord_dist_matrix ~ kfsuit + roads, data = surface, 
