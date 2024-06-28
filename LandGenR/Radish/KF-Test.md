@@ -98,9 +98,11 @@ write.table(chord_dist_matrix, file = "KF_chord_dist_matrix.txt", sep = "\t", ro
 # Run Radish
 myRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/KitFox-ESARPmodel-Raster1000x1000-FillAllCells.tif")
 
-roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/CaliforniaRoads-Reprojected-1000x1000-FillAllCells.tif")
-roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/CaliforniaRoads-Reprojected-1000x1000-MajorRoadsOnly.tif")
+#roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/CaliforniaRoads-Reprojected-1000x1000-FillAllCells.tif")
+#roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/CaliforniaRoads-Reprojected-1000x1000-MajorRoadsOnly.tif")
 
+roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/CaliforniaMajorRoads_rasterized.tif")
+roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/CaliforniaMajorHighways_rasterized.tif")
 
 
 # scaling spatial covariates helps avoid numeric overflow
