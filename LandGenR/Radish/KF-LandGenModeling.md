@@ -152,15 +152,69 @@ points(df_points, pch = 19)
 dev.off()
 
 surface <- conductance_surface(covariates, df_points, directions = 8)
+```
 
-fit_nnls <- radish(chord_dist_matrix ~ kfsuit + roads, surface, 
-                   radish::loglinear_conductance, radish::leastsquares)
+**This is the model summary for the kf habitat suitability alone. It doesn't really make sense because it says increased kf habitat suitability is negatively correlated with conductance**
 
-summary(fit_nnls)
-
-### This is the model summary for the kfsuit alone ###
+```
 fit_nnls <- radish(chord_dist_matrix ~ kfsuit, surface, 
                    radish::loglinear_conductance, radish::leastsquares)
+
+> summary(fit_nnls)
+Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
+Call:   radish(formula = chord_dist_matrix ~ kfsuit, data = surface, 
+    conductance_model = radish::loglinear_conductance, measurement_model = radish::leastsquares)
+
+Loglikelihood: 154.7229 (4 degrees freedom)
+AIC: -301.4458 
+
+Number of function calls: 12 
+Number of Newton-Raphson steps: 4 
+Norm of gradient at MLE: 5.927841e-09 
+
+Nuisance parameters:
+  alpha     beta      tau  
+0.08971  0.24406  6.62629  
+
+Coefficients:
+       Estimate Std. Error z value Pr(>|z|)   
+kfsuit  -0.3506     0.1333   -2.63  0.00853 **
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+```
+Let's see what it looks like if we move through the rest of the process of plotting the conductance surface.
+```
+# visualisation:
+png("KF Optimized Resistance Distance - KFSuit Model - 20240628.png", width = 800, height = 600)
+plot(fitted(fit_nnls, "distance"), chord_dist_matrix, pch = 19,
+     xlab = "Optimized resistance distance", ylab = "chord distance")
+dev.off()
+
+# visualise estimated conductance surface
+fitted_conductance <- conductance(surface, fit_nnls, quantile = 0.95)
+
+png("KF FittedConductance KFSuit Model - 20240628.png", width = 800, height = 600)
+plot(fitted_conductance[["est"]], 
+     main = "Fitted conductance surface\n(KFSuit)")
+points(df_points, pch = 19)
+dev.off()
+
+png("KF FittedConductance Lower95 - KFSuit Model - 20240628.png", width = 800, height = 600)
+plot(fitted_conductance[["lower95"]], 
+     main = "Fitted conductance surface\n(KFSuit)")
+points(df_points, pch = 19)
+dev.off()
+
+png("KF FittedConductance Upper95 - KFSuit Model - 20240628.png", width = 800, height = 600)
+plot(fitted_conductance[["upper95"]], main = 
+     "Fitted conductance surface\n(KFSuit)")
+points(df_points, pch = 19)
+dev.off()
+```
+Trying other model combos - Can I recreate the full model I made a few weeks go...?
+
+```
+################# ALT MODELS #######################
 
 ### This is the model summary for the kfsuit and Major roads (new raster layer) ###
 Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
