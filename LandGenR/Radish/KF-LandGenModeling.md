@@ -93,6 +93,12 @@ write.table(chord_dist_matrix, file = "KF_chord_dist_matrix.txt", sep = "\t", ro
   <img src="chord-dist-matrix.png" alt="Raster Image" width="600">
 </div>
 
+I also have a dataset that doesn't include Carrizo
+<div align="center">
+  <img src="chord-dist-matrix-noCarrizo.png" alt="Raster Image" width="600">
+</div>
+
+
 ## Run Radish
 ```
 library(radish)
@@ -332,7 +338,13 @@ plot(fitted(fit_mlpe_full, "distance"), chord_dist_matrix, pch = 19,
 dev.off()
 
 ```
+## Plot fitted conductance surface
+fitted_conductance <- conductance(surface, fit_mlpe, quantile = 0.95)
 
+png("KF Fitted Conductance - Full Model No Carrizo - 20240628.png", width = 800, height = 600)
+plot(log(fitted_conductance[["est"]]), 
+     main = "Fitted conductance surface\n(kfsuit + roads)")
+dev.off()
 
 
 
@@ -487,7 +499,7 @@ dev.off()
 
 # visualise likelihood surface across grid (takes awhile)
 theta <- as.matrix(expand.grid(kfsuit=seq(-1,1,length.out=21)))
-grid <- radish_grid(theta, chord_dist_matrix ~ kfsuit, surface,
+grid <- radish_grid(theta, chord_dist_matrix ~ kfsuit + roads, surface,
                     radish::loglinear_conductance, radish::mlpe)
 
 library(ggplot2)
