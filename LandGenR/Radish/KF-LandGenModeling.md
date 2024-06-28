@@ -1,14 +1,10 @@
-Some comments on generating raster layers. I initially did this in QGIS but was running into some really weird issues where converting linear features (roads) to raster cells was resulting in gaps in my raster layer that seemed like they would cause problems for modeling resistance and current.... I ended up using 'gdal' and it worked great and was pretty straightforward. See [RasterizingData.md]() for notes on how to ensure all raster layers are the same resolution and extent.
+Some comments on generating raster layers. I initially did this in QGIS but was running into some really weird issues where converting linear features (roads) to raster cells was resulting in gaps in my raster layer that seemed like they would cause problems for modeling resistance and current.... I ended up using 'gdal' and it worked great and was pretty straightforward. See [RasterizingData.md](https://github.com/squisquater/KitFoxGBS/blob/main/LandGenR/Radish/RasterizingData.md) for notes on how to ensure all raster layers are the same resolution and extent.
 
-```
-library(adegenet)
-library(radish)
-library(raster)
-
-GENERATE A CHORD (DISTANCE) MATRIX
-
+## GENERATE A CHORD (DISTANCE) MATRIX
 I can't find a good tool for data conversion so I'm tweaking the format the plink file myself.
 Note: For some weird reason I have logical values (TRUE only) in my plink file. I converted all of these to "T".
+```
+library(adegenet)
 
 # Load the necessary data if not already loaded - make sure if this is coming from stacks there is no header
 plink.ped <- read.table("/group/ctbrowngrp2/sophiepq/KitFoxGBS/stacks/SJKF_metapop_LandGen_n223_20x/populations.plink_noheader.ped", header=FALSE, stringsAsFactors = FALSE)
@@ -92,8 +88,16 @@ chord_dist_matrix <- as.matrix(chord_dist)
 
 # write to an external file for future use.
 write.table(chord_dist_matrix, file = "KF_chord_dist_matrix.txt", sep = "\t", row.names = TRUE, quote = FALSE)
+```
+<div align="center">
+  <img src="chord-dist-matrix.png" alt="Raster Image" width="600">
+</div>
 
-#################################################################################
+## Run Radish
+```
+
+library(radish)
+library(raster)
 
 # If you are starting from this point and need to load your distance matrix you can do so with the following line of code.
 # Read the file into a data frame
