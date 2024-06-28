@@ -95,13 +95,15 @@ write.table(chord_dist_matrix, file = "KF_chord_dist_matrix.txt", sep = "\t", ro
 
 ## Run Radish
 ```
-
 library(radish)
 library(raster)
 
 # If you are starting from this point and need to load your distance matrix you can do so with the following line of code.
 # Read the file into a data frame
 chord_dist_df <- read.table("KF_chord_dist_matrix.txt", sep = "\t", header = TRUE, row.names = 1)
+
+# Also trying a matrix that does not include Carrizo because it seems like it might just be a strong signal due to small sample size.
+#chord_dist_df <- read.table("KF_chord_dist_matrix_noCarrizo.txt", sep = "\t", header = TRUE, row.names = 1)
 
 # Convert the data frame to a matrix
 chord_dist_matrix <- as.matrix(chord_dist_df)
@@ -114,20 +116,20 @@ myRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/KitFox
 #roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/CaliforniaRoads-Reprojected-1000x1000-FillAllCells.tif")
 #roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/CaliforniaRoads-Reprojected-1000x1000-MajorRoadsOnly.tif")
 #roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/CaliforniaMajorRoads_rasterized.tif")
-#roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/CaliforniaMajorHighways_rasterized.tif")
+roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/CaliforniaMajorHighways_rasterized.tif")
 
 
 # scaling spatial covariates helps avoid numeric overflow
 covariates <- raster::stack(list(kfsuit = raster::scale(myRaster),
                                 roads = raster::scale(roadRaster)))
-
-
-## Also trying just the Major roads because I was getting a weird inverse relationship compared to what I expected.
-covariates <- raster::stack(list(roads = raster::scale(roadRaster)))
                                 
 
 #Load in spatial points dataframe
-df <- data.frame(lon = c(-119.063, -118.769, -120.301, -119.836, -120.263, -119.607, -120.878, -120.749, -119.579, -119.462, -120.043), lat = c(35.366, 35.354, 35.85, 35.174, 36.187, 35.375, 36.644, 36.569, 35.691, 35.139, 35.372))
+#df <- data.frame(lon = c(-119.063, -118.769, -120.301, -119.836, -120.263, -119.607, -120.878, -120.749, -119.579, -119.462, -120.043), lat = c(35.366, 35.354, 35.85, 35.174, 36.187, 35.375, 36.644, 36.569, 35.691, 35.139, 35.372))
+
+#Alt SPDF that doesn't have carrizo!
+df <- data.frame(lon = c(-119.063, -118.769, -120.301, -120.263, -119.607, -120.878, -120.749, -119.579, -119.462, -120.043), lat = c(35.366, 35.354, 35.85, 36.187, 35.375, 36.644, 36.569, 35.691, 35.139, 35.372))
+
 #Convert to spatial points dataframe
 coordinates(df) <- ~ lon + lat
 proj4string(df) <- CRS("+proj=longlat +datum=WGS84 +no_defs")
@@ -153,35 +155,189 @@ dev.off()
 
 surface <- conductance_surface(covariates, df_points, directions = 8)
 ```
+Note that radish has different models that you can implement for estimating conductance surfaces. You can use the least squares model or the MLPE (Maximum Likelihood Population Effects) model but they differ in their approaches and assumptions.
+* The least squares model is simpler and faster and can work well if your data is fairly straightforward (i.e. where the relationship between the predictors and the response is approximately linear)
+but the MPLE model i
+* Otherwise I recommend the MLPE model which is more computationally intensive but better equiped to handle complex relaionships in your data.
 
-**This is the model summary for the kf habitat suitability alone. It doesn't really make sense because it says increased kf habitat suitability is negatively correlated with conductance**
 
+**This is modeling kit fox habitat suitability with the new highway layer I made in 'gdal'**
 ```
-fit_nnls <- radish(chord_dist_matrix ~ kfsuit, surface, 
-                   radish::loglinear_conductance, radish::leastsquares)
+fit_mlpe_full <- radish(chord_dist_matrix ~ kfsuit + roads, surface, 
+                   radish::loglinear_conductance, radish::mlpe)
 
-> summary(fit_nnls)
+summary(fit_mlpe_full)
+> summary(fit_mlpe_full)
 Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
-Call:   radish(formula = chord_dist_matrix ~ kfsuit, data = surface, 
-    conductance_model = radish::loglinear_conductance, measurement_model = radish::leastsquares)
+Call:   radish(formula = chord_dist_matrix ~ kfsuit + roads, data = surface, 
+    conductance_model = radish::loglinear_conductance, measurement_model = radish::mlpe)
 
-Loglikelihood: 154.7229 (4 degrees freedom)
-AIC: -301.4458 
+Loglikelihood: 201.0076 (6 degrees freedom)
+AIC: -390.0151 
 
-Number of function calls: 12 
-Number of Newton-Raphson steps: 4 
-Norm of gradient at MLE: 5.927841e-09 
+Number of function calls: 28 
+Number of Newton-Raphson steps: 7 
+Norm of gradient at MLE: 3.895811e-06 
 
 Nuisance parameters:
-  alpha     beta      tau  
-0.08971  0.24406  6.62629  
+ alpha    beta     tau     rho  
+0.1531  0.8375  5.9776  3.2640  
 
 Coefficients:
        Estimate Std. Error z value Pr(>|z|)   
-kfsuit  -0.3506     0.1333   -2.63  0.00853 **
+kfsuit   0.9329     0.3141   2.970  0.00298 **
+roads   -0.1580     0.8868  -0.178  0.85860   
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Coefficients:
+         kfsuit
+roads 0.2499018
+
+```
+**This is a reduced model that tests kit fox habitat suitability on it's own**
+```
+fit_mlpe_kfsuit <- radish(chord_dist_matrix ~ kfsuit, surface, 
+                   radish::loglinear_conductance, radish::mlpe)
+
+summary(fit_mlpe_kfsuit)
+
+> summary(fit_mlpe_kfsuit)
+Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
+Call:   radish(formula = chord_dist_matrix ~ kfsuit, data = surface, 
+    conductance_model = radish::loglinear_conductance, measurement_model = radish::mlpe)
+
+Loglikelihood: 200.9751 (5 degrees freedom)
+AIC: -391.9503 
+
+Number of function calls: 18 
+Number of Newton-Raphson steps: 5 
+Norm of gradient at MLE: 2.643463e-11 
+
+Nuisance parameters:
+ alpha    beta     tau     rho  
+0.1533  0.8422  5.9679  3.2751  
+
+Coefficients:
+       Estimate Std. Error z value Pr(>|z|)   
+kfsuit   0.9468     0.3016   3.139  0.00169 **
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 ```
+**This model tests an for an interaction between kit fox habitat suitability and roads**
+```
+fit_mlpe_int <- radish(chord_dist_matrix ~ kfsuit*roads, surface, 
+                   radish::loglinear_conductance, radish::mlpe)
+summary(fit_mlpe_int)
+
+> summary(fit_mlpe_int)
+Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
+Call:   radish(formula = chord_dist_matrix ~ kfsuit * roads, data = surface, 
+    conductance_model = radish::loglinear_conductance, measurement_model = radish::mlpe)
+
+Loglikelihood: 201.014 (7 degrees freedom)
+AIC: -388.0281 
+
+Number of function calls: 30 
+Number of Newton-Raphson steps: 8 
+Norm of gradient at MLE: 7.582142e-10 
+
+Nuisance parameters:
+ alpha    beta     tau     rho  
+0.1532  0.8321  5.9742  3.2687  
+
+Coefficients:
+             Estimate Std. Error z value Pr(>|z|)  
+kfsuit        0.91849    0.38168   2.406   0.0161 *
+roads        -0.04824    0.84446  -0.057   0.9544  
+kfsuit:roads -0.15871    1.67999  -0.094   0.9247  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Coefficients:
+                kfsuit     roads
+roads        0.3706587          
+kfsuit:roads 0.5580897 0.2097804
+
+```
+**This model tests against the null model of IBD**
+```
+fit_mlpe_ibd <- radish(chord_dist_matrix ~ 1, surface, 
+                   radish::loglinear_conductance, radish::mlpe)
+summary(fit_mlpe_ibd)
+
+> summary(fit_mlpe_ibd)
+Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
+Call:   radish(formula = chord_dist_matrix ~ 1, data = surface, conductance_model = radish::loglinear_conductance, 
+    measurement_model = radish::mlpe)
+
+Loglikelihood: 199.4003 (4 degrees freedom)
+AIC: -390.8006 
+
+Number of function calls: 1 
+Number of Newton-Raphson steps: 0 
+Norm of gradient at MLE: NA 
+
+Nuisance parameters:
+  alpha     beta      tau      rho  
+0.09438  0.38979  6.39472  2.63130  
+
+No coefficients
+
+```
+**Compare models**
+```
+## Null vs Full model
+anova(fit_mlpe_ibd, fit_mlpe_full)
+Likelihood ratio test
+Null: ~ 1
+Alt: ~ kfsuit + roads
+     logLik Df  ChiSq Df(ChiSq) Pr(>Chi)
+Null 199.40  4                          
+Alt  201.01  6 3.2145         2   0.2004
+
+## Null vs Reduced model (suitability only)
+> anova(fit_mlpe_ibd, fit_mlpe_kfsuit)
+Likelihood ratio test
+Null: ~ 1
+Alt: ~ kfsuit
+     logLik Df  ChiSq Df(ChiSq) Pr(>Chi)  
+Null 199.40  4                            
+Alt  200.97  5 3.1497         1  0.07594 .
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+## Null vs Interaction model
+anova(fit_mlpe_ibd, fit_mlpe_int)
+Likelihood ratio test
+Null: ~ 1
+Alt: ~ kfsuit + roads + kfsuit:roads
+     logLik Df  ChiSq Df(ChiSq) Pr(>Chi)
+Null 199.40  4                          
+Alt  201.01  7 3.2275         3   0.3579
+```
+
+## Visualizing Results
+Let's look at the relationship between the genetic distance (chord distance) and the optimized resistance distance from our top MLPE model. These look awful!
+```
+png("KF Optimized Resistance Distance - KFSuit Model - 20240628.png", width = 800, height = 600)
+plot(fitted(fit_mlpe_kfsuit, "distance"), chord_dist_matrix, pch = 19,
+     xlab = "Optimized resistance distance", ylab = "chord distance")
+dev.off()
+
+png("KF Optimized Resistance Distance - Full Model - 20240628.png", width = 800, height = 600)
+plot(fitted(fit_mlpe_full, "distance"), chord_dist_matrix, pch = 19,
+     xlab = "Optimized resistance distance", ylab = "chord distance")
+dev.off()
+
+```
+
+
+
+
+############### OLD IGNORE FOR NOW !!! ####################
+
 Let's see what it looks like if we move through the rest of the process of plotting the conductance surface.
 ```
 # visualisation:
@@ -216,103 +372,7 @@ Trying other model combos - Can I recreate the full model I made a few weeks go.
 ```
 ################# ALT MODELS #######################
 
-### This is the model summary for the kfsuit and Major roads (new raster layer) ###
-Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
-Call:   radish(formula = chord_dist_matrix ~ kfsuit + roads, data = surface, 
-    conductance_model = radish::loglinear_conductance, measurement_model = radish::leastsquares)
 
-Loglikelihood: 154.7984 (5 degrees freedom)
-AIC: -299.5968 
-
-Number of function calls: 33 
-Number of Newton-Raphson steps: 9 
-Norm of gradient at MLE: 0.0004767941 
-
-Nuisance parameters:
- alpha    beta     tau  
-0.0887  0.3027  6.6290  
-
-Coefficients:
-       Estimate Std. Error z value Pr(>|z|)   
-kfsuit  -0.3482     0.1318  -2.641  0.00826 **
-roads   -1.7776   511.6885  -0.003  0.99723   
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-Correlation of Coefficients:
-             kfsuit
-roads -4.991564e-05
-
-### This is the model summary for habitat suitability alone (no kf suit or minor roads)
-
-fit_nnls <- radish(chord_dist_matrix ~ kfsuit, surface, 
-                   radish::loglinear_conductance, radish::leastsquares)
-
-summary(fit_nnls)
-
-
-
-### This is the model summary for just the major roads (New Raster) alone (no kf suit or minor roads)
-
-fit_nnls <- radish(chord_dist_matrix ~ roads, surface, 
-                   radish::loglinear_conductance, radish::leastsquares)
-
-summary(fit_nnls)
-
-> summary(fit_nnls)
-Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
-Call:   radish(formula = chord_dist_matrix ~ roads, data = surface, conductance_model = radish::loglinear_conductance, 
-    measurement_model = radish::leastsquares)
-
-Loglikelihood: 151.6514 (4 degrees freedom)
-AIC: -295.3028 
-
-Number of function calls: 7 
-Number of Newton-Raphson steps: 2 
-Norm of gradient at MLE: 1.694062e-12 
-
-Nuisance parameters:
- alpha    beta     tau  
-0.1363  1.0905  6.5146  
-
-Coefficients:
-        Estimate Std. Error z value Pr(>|z|)
-roads     -11.69 1486025.80       0        1
-
-
-### This is the model summary for the kfsuit and all roads (Major + Minor - new raster) combined ###
-> summary(fit_nnls)
-Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
-Call:   radish(formula = chord_dist_matrix ~ kfsuit + roads, data = surface, 
-    conductance_model = radish::loglinear_conductance, measurement_model = radish::leastsquares)
-
-Loglikelihood: 163.9698 (5 degrees freedom)
-AIC: -317.9395 
-
-Number of function calls: 43 
-Number of Newton-Raphson steps: 10 
-Norm of gradient at MLE: 1.947029e-07 
-
-Nuisance parameters:
-  alpha     beta      tau  
- 0.1726  13.7574   6.9625  
-
-Coefficients:
-       Estimate Std. Error z value Pr(>|z|)   
-kfsuit   2.0990     1.1358   1.848  0.06460 . 
-roads    2.6079     0.8918   2.924  0.00345 **
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-Correlation of Coefficients:
-         kfsuit
-roads 0.9366792
-
-# refit with with a different measurement model that models
-# dependence among pairwise measurements (radish::mlpe)
-fit_mlpe <- radish(chord_dist_matrix ~ kfsuit + roads, surface, 
-                   radish::loglinear_conductance, radish::mlpe)
-summary(fit_mlpe)
 
 ### This is the model summary for just the major roads alone (no kf suit or minor roads)
 > summary(fit_mlpe)
