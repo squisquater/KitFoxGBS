@@ -105,11 +105,12 @@ chord_dist_matrix <- as.matrix(chord_dist_df)
 # Run Radish
 myRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/KitFox-ESARPmodel-Raster1000x1000-FillAllCells.tif")
 
+
+# Testing out different road rasters
 #roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/CaliforniaRoads-Reprojected-1000x1000-FillAllCells.tif")
 #roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/CaliforniaRoads-Reprojected-1000x1000-MajorRoadsOnly.tif")
-
-roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/CaliforniaMajorRoads_rasterized.tif")
-roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/CaliforniaMajorHighways_rasterized.tif")
+#roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/CaliforniaMajorRoads_rasterized.tif")
+#roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/CaliforniaMajorHighways_rasterized.tif")
 
 
 # scaling spatial covariates helps avoid numeric overflow
@@ -152,6 +153,10 @@ fit_nnls <- radish(chord_dist_matrix ~ kfsuit + roads, surface,
                    radish::loglinear_conductance, radish::leastsquares)
 
 summary(fit_nnls)
+
+### This is the model summary for the kfsuit alone ###
+fit_nnls <- radish(chord_dist_matrix ~ kfsuit, surface, 
+                   radish::loglinear_conductance, radish::leastsquares)
 
 ### This is the model summary for the kfsuit and Major roads (new raster layer) ###
 Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
