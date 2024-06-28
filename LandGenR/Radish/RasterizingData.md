@@ -84,7 +84,7 @@ Band 1 Block=345x5 Type=Float32, ColorInterp=Gray
   NoData Value=0
 ```
 >You can see here the pixel size is 1000 x 1000 
->You can parameterize the spatial extent by providing the lower left ( -208964.104, -394240.367) and upper >right (  136035.896,   31759.633) cooredinates.
+>You can parameterize the spatial extent by providing the lower left ( -208964.104, -394240.367) and upper right (  136035.896,   31759.633) coordinates.
 
 Rasterize the California Major Roads shapefile using the the same extent and resolution as the habitat suitablitity layer.
 ```
