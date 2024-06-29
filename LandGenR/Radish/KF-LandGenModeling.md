@@ -229,6 +229,33 @@ kfsuit   0.9468     0.3016   3.139  0.00169 **
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 ```
+**This is a reduced model that tests the effects of roads on it's own**
+```
+fit_mlpe_roads <- radish(chord_dist_matrix ~ roads, surface, 
+                   radish::loglinear_conductance, radish::mlpe)
+
+summary(fit_mlpe_roads)
+
+> summary(fit_mlpe_roads)
+Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
+Call:   radish(formula = chord_dist_matrix ~ roads, data = surface, conductance_model = radish::loglinear_conductance, 
+    measurement_model = radish::mlpe)
+
+Loglikelihood: 199.5178 (5 degrees freedom)
+AIC: -389.0355 
+
+Number of function calls: 5 
+Number of Newton-Raphson steps: 2 
+Norm of gradient at MLE: 4.953069e-11 
+
+Nuisance parameters:
+ alpha    beta     tau     rho  
+0.0952  0.9786  6.3994  2.6308  
+
+Coefficients:
+        Estimate Std. Error z value Pr(>|z|)
+roads     -7.888 413823.030       0        1
+```
 **This model tests an for an interaction between kit fox habitat suitability and roads**
 ```
 fit_mlpe_int <- radish(chord_dist_matrix ~ kfsuit*roads, surface, 
@@ -312,6 +339,15 @@ Alt  200.97  5 3.1497         1  0.07594 .
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
+## Null vs Reduced model (roads only)
+> anova(fit_mlpe_ibd, fit_mlpe_roads)
+Likelihood ratio test
+Null: ~ 1
+Alt: ~ roads
+     logLik Df   ChiSq Df(ChiSq) Pr(>Chi)
+Null 199.40  4                           
+Alt  199.52  5 0.23492         1   0.6279
+
 
 ## Null vs Interaction model
 anova(fit_mlpe_ibd, fit_mlpe_int)
@@ -326,26 +362,74 @@ Alt  201.01  7 3.2275         3   0.3579
 ## Visualizing Results
 Let's look at the relationship between the genetic distance (chord distance) and the optimized resistance distance from our top MLPE model. These look awful!
 ```
-png("KF Optimized Resistance Distance - KFSuit Model - 20240628.png", width = 800, height = 600)
-plot(fitted(fit_mlpe_kfsuit, "distance"), chord_dist_matrix, pch = 19,
-     xlab = "Optimized resistance distance", ylab = "chord distance")
-dev.off()
-
 png("KF Optimized Resistance Distance - Full Model - 20240628.png", width = 800, height = 600)
 plot(fitted(fit_mlpe_full, "distance"), chord_dist_matrix, pch = 19,
      xlab = "Optimized resistance distance", ylab = "chord distance")
 dev.off()
 
-```
-## Plot fitted conductance surface
-```
-fitted_conductance <- conductance(surface, fit_mlpe, quantile = 0.95)
+png("KF Optimized Resistance Distance - KFSuit Model - 20240628.png", width = 800, height = 600)
+plot(fitted(fit_mlpe_kfsuit, "distance"), chord_dist_matrix, pch = 19,
+     xlab = "Optimized resistance distance", ylab = "chord distance")
+dev.off()
 
-png("KF Fitted Conductance - Full Model No Carrizo - 20240628.png", width = 800, height = 600)
-plot(log(fitted_conductance[["est"]]), 
-     main = "Fitted conductance surface\n(kfsuit + roads)")
+png("KF Optimized Resistance Distance - Roads Model - 20240628.png", width = 800, height = 600)
+plot(fitted(fit_mlpe_roads, "distance"), chord_dist_matrix, pch = 19,
+     xlab = "Optimized resistance distance", ylab = "chord distance")
 dev.off()
 ```
+## Plot fitted conductance surface for each
+```
+fitted_conductance_full <- conductance(surface, fit_mlpe_full, quantile = 0.95)
+fitted_conductance_kfsuit <- conductance(surface, fit_mlpe_kfsuit, quantile = 0.95)
+fitted_conductance_roads <- conductance(surface, fit_mlpe_roads, quantile = 0.95)
+fitted_conductance_int <- conductance(surface, fit_mlpe_int, quantile = 0.95)
+
+png("KF Fitted Conductance - Full Model - 20240628.png", width = 800, height = 600)
+plot(log(fitted_conductance_full[["est"]]), 
+     main = "Fitted conductance surface\n(kfsuit + roads)")
+dev.off()
+
+png("KF Fitted Conductance - kfsuit - 20240628.png", width = 800, height = 600)
+plot(log(fitted_conductance_kfsuit[["est"]]), 
+     main = "Fitted conductance surface\n(kfsuit)")
+dev.off()
+
+png("KF Fitted Conductance - roads - 20240628.png", width = 800, height = 600)
+plot(log(fitted_conductance_roads[["est"]]), 
+     main = "Fitted conductance surface\n(roads)")
+dev.off()
+
+png("KF Fitted Conductance - interaction model - 20240628.png", width = 800, height = 600)
+plot(log(fitted_conductance_int[["est"]]), 
+     main = "Fitted conductance surface\n(kfsuit*roads)")
+dev.off()
+```
+# visualise likelihood surface across grid (takes awhile)
+theta <- as.matrix(expand.grid(kfsuit=seq(-1,1,length.out=21), 
+                               roads=seq(-1,1,length.out=21)))
+grid <- radish_grid(theta, chord_dist_matrix ~ kfsuit + roads, surface,
+                    radish::loglinear_conductance, radish::mlpe)
+
+library(ggplot2)
+ggplot(data.frame(loglik=grid$loglik, grid$theta), 
+       aes(x=forestcover, y=altitude)) + 
+  geom_tile(aes(fill=loglik)) + 
+  geom_contour(aes(z=loglik), color="black") +
+  annotate(geom = "point", colour = "red",
+           x = coef(fit_mlpe)["forestcover"], 
+           y = coef(fit_mlpe)["altitude"]) +
+  theme_bw() +
+  xlab(expression(theta[altitude])) +
+  ylab(expression(theta[forestcover]))
+
+# calculate resistance distances across grid
+distances <- radish_distance(theta, ~forestcover + altitude, 
+                             surface, radish::loglinear_conductance)
+
+ibd <- which(theta[,1] == 0 & theta[,2] == 0)
+plot(distances$distance[,,ibd], melip.Fst, pch = 19, 
+     xlab = "Null resistance distance (IBD)", ylab = "Fst")
+
 
 ############### OLD IGNORE FOR NOW !!! ####################
 
