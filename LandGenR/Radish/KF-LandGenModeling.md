@@ -105,8 +105,10 @@ library(radish)
 library(raster)
 
 # If you are starting from this point and need to load your distance matrix you can do so with the following line of code.
-# Read the file into a data frame
-dist_df <- read.table("KF_dist_matrix.txt", sep = "\t", header = TRUE, row.names = 1)
+# Read the file into a data frame. I have three different distance matrices to play around with. chord distance, Fst, and Nei's D.
+#dist_df <- read.table("KF_dist_matrix.txt", sep = "\t", header = TRUE, row.names = 1)
+#dist_df <- read.table("KF_Fst_matrix.txt", sep = "\t", header = TRUE, row.names = 1)
+dist_df <- read.table("KF_NeisD_matrix.txt", sep = "\t", header = TRUE, row.names = 1)
 
 # Also trying a matrix that does not include Carrizo because it seems like it might just be a strong signal due to small sample size.
 #dist_df <- read.table("KF_dist_matrix_noCarrizo.txt", sep = "\t", header = TRUE, row.names = 1)
