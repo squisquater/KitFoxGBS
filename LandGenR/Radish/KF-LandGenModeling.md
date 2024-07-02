@@ -124,7 +124,8 @@ myRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/KitFox
 #roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/CaliforniaRoads-Reprojected-1000x1000-FillAllCells.tif")
 #roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/CaliforniaRoads-Reprojected-1000x1000-MajorRoadsOnly.tif")
 #roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/CaliforniaMajorRoads_rasterized.tif")
-roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/CaliforniaMajorHighways_rasterized.tif")
+#roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/CaliforniaMajorHighways_rasterized.tif")
+roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/InterstateHwy5_rasterized.tif")
 
 
 # scaling spatial covariates helps avoid numeric overflow
