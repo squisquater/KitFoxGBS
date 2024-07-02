@@ -164,6 +164,10 @@ ggplot(plot_data, aes(x = GeographicDistance, y = GeneticDistance)) +
 
 dev.off()
 ```
+<div align="center">
+  <img src="KF_Optimized_Resistance_Distance_Null_Model_20240628.png" alt="Raster Image" width="600">
+</div>
+
 You can also visualize this with a kernel density plot
 ```
 png("KF_Optimized_Resistance_Distance_Null_Model_20240628_kde.png", width = 800, height = 600)
@@ -175,3 +179,7 @@ abline(model, col = "red")
 title("Isolation by distance plot")
 dev.off()
 ```
+<div align="center">
+  <img src="KF_Optimized_Resistance_Distance_Null_Model_20240628_kde.png" alt="Raster Image" width="600">
+</div>
+
