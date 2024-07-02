@@ -151,12 +151,12 @@ df_projected <- spTransform(df, CRSobj = raster_crs)
 #Extract to a spatial points object
 df_points <- SpatialPoints(coordinates(df_projected), proj4string = CRS(proj4string(df_projected)))
 
-png("KFsuit.png", width = 800, height = 600)
+png("KFsuit-20240702.png", width = 800, height = 600)
 plot(covariates[["kfsuit"]])
 points(df_points, pch = 19)
 dev.off()
 
-png("Majorroads.png", width = 800, height = 600)
+png("Majorroads-20240702.png", width = 800, height = 600)
 plot(covariates[["roads"]])
 points(df_points, pch = 19)
 dev.off()
@@ -174,6 +174,45 @@ fit_mlpe_full <- radish(dist_matrix ~ kfsuit + roads, surface,
                    radish::loglinear_conductance, radish::mlpe)
 
 summary(fit_mlpe_full)
+
+### These are the results using Nei's D.
+> summary(fit_mlpe_full)
+                        Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
+Call:   radish(formula = dist_matrix ~ kfsuit + roads, data = surface,
+    conductance_model = radish::loglinear_conductance, measurement_model = radish::mlpe)
+  
+Loglikelihood: 241.0547 (6 degrees freedom)
+AIC: -470.1094
+  
+Number of function calls: 17
+Number of Newton-Raphson steps: 5
+Norm of gradient at MLE: 0.0002050391
+  
+Nuisance parameters:
+  alpha     beta      tau      rho
+0.03198  0.96775  7.04688  3.76519
+  
+Coefficients:
+       Estimate Std. Error z value Pr(>|z|)
+kfsuit   1.1020     0.2311   4.769 1.85e-06 ***
+roads   -4.3620        NaN     NaN      NaN
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+  
+Correlation of Coefficients:
+      kfsuit
+roads    NaN
+Warning messages:
+1: In sqrt(diag(solve(x$fit$hessian))) : NaNs produced
+2: In summary.radish(fit_mlpe_full) :
+  Hessian matrix has negative eigenvalues: possibly a saddle point
+3: In summary.radish(fit_mlpe_full) :
+  Hessian matrix is singular or nearly singular: model is probably non-identifiable
+4: In sqrt(1/diag(V)) : NaNs produced
+5: In cov2cor(vcov) :
+  diag(.) had 0 or NA entries; non-finite result is doubtful
+
+### The results below are old results from when I used chord distance
 > summary(fit_mlpe_full)
 Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
 Call:   radish(formula = dist_matrix ~ kfsuit + roads, data = surface, 
@@ -208,7 +247,31 @@ fit_mlpe_kfsuit <- radish(dist_matrix ~ kfsuit, surface,
                    radish::loglinear_conductance, radish::mlpe)
 
 summary(fit_mlpe_kfsuit)
+### These are the results using Nei's D.
+> summary(fit_mlpe_kfsuit)
+Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
+Call:   radish(formula = dist_matrix ~ kfsuit, data = surface, conductance_model = radish::loglinear_conductance, 
+    measurement_model = radish::mlpe)
 
+Loglikelihood: 240.8049 (5 degrees freedom)
+AIC: -471.6099 
+
+Number of function calls: 15 
+Number of Newton-Raphson steps: 4 
+Norm of gradient at MLE: 1.260451e-10 
+
+Nuisance parameters:
+  alpha     beta      tau      rho  
+0.03228  0.60874  7.02670  3.77945  
+
+Coefficients:
+       Estimate Std. Error z value Pr(>|z|)    
+kfsuit   1.1343     0.2307   4.918 8.76e-07 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+### The results below are old results from when I used chord distance
 > summary(fit_mlpe_kfsuit)
 Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
 Call:   radish(formula = dist_matrix ~ kfsuit, data = surface, 
@@ -238,6 +301,28 @@ fit_mlpe_roads <- radish(dist_matrix ~ roads, surface,
 
 summary(fit_mlpe_roads)
 
+### These are the results using Nei's D.
+> summary(fit_mlpe_roads)
+Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
+Call:   radish(formula = dist_matrix ~ roads, data = surface, conductance_model = radish::loglinear_conductance, 
+    measurement_model = radish::mlpe)
+
+Loglikelihood: 237.8458 (5 degrees freedom)
+AIC: -465.6915 
+
+Number of function calls: 7 
+Number of Newton-Raphson steps: 2 
+Norm of gradient at MLE: 1.540468e-11 
+
+Nuisance parameters:
+    alpha       beta        tau        rho  
+-0.004202   1.001100   7.492314   3.033705  
+
+Coefficients:
+       Estimate Std. Error z value Pr(>|z|)
+roads    -12.64  743841.13       0        1
+
+### The results below are old results from when I used chord distance
 > summary(fit_mlpe_roads)
 Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
 Call:   radish(formula = dist_matrix ~ roads, data = surface, conductance_model = radish::loglinear_conductance, 
@@ -264,6 +349,38 @@ fit_mlpe_int <- radish(dist_matrix ~ kfsuit*roads, surface,
                    radish::loglinear_conductance, radish::mlpe)
 summary(fit_mlpe_int)
 
+### These are the results using Nei's D.
+> summary(fit_mlpe_int)
+Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
+Call:   radish(formula = dist_matrix ~ kfsuit * roads, data = surface, 
+    conductance_model = radish::loglinear_conductance, measurement_model = radish::mlpe)
+
+Loglikelihood: 241.0547 (7 degrees freedom)
+AIC: -468.1094 
+
+Number of function calls: 19 
+Number of Newton-Raphson steps: 5 
+Norm of gradient at MLE: 5.38279e-05 
+
+Nuisance parameters:
+  alpha     beta      tau      rho  
+0.03198  0.73576  7.04688  3.76519  
+
+Coefficients:
+              Estimate Std. Error z value Pr(>|z|)
+kfsuit          1.0639   693.2590   0.002    0.999
+roads          -2.0462  3058.9574  -0.001    0.999
+kfsuit:roads   -0.3214  5857.9147   0.000    1.000
+
+Correlation of Coefficients:
+                kfsuit     roads
+roads        0.8891048          
+kfsuit:roads 0.9999999 0.8891048
+Warning message:
+In summary.radish(fit_mlpe_int) :
+  Hessian matrix is singular or nearly singular: model is probably non-identifiable
+
+### The results below are old results from when I used chord distance
 > summary(fit_mlpe_int)
 Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
 Call:   radish(formula = dist_matrix ~ kfsuit * roads, data = surface, 
@@ -300,6 +417,27 @@ fit_mlpe_ibd <- radish(dist_matrix ~ 1, surface,
                    radish::loglinear_conductance, radish::mlpe)
 summary(fit_mlpe_ibd)
 
+### These are the results using Nei's D.
+> summary(fit_mlpe_ibd)
+Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
+Call:   radish(formula = dist_matrix ~ 1, data = surface, conductance_model = radish::loglinear_conductance, 
+    measurement_model = radish::mlpe)
+
+Loglikelihood: 237.5182 (4 degrees freedom)
+AIC: -467.0364 
+
+Number of function calls: 1 
+Number of Newton-Raphson steps: 0 
+Norm of gradient at MLE: NA 
+
+Nuisance parameters:
+    alpha       beta        tau        rho  
+-0.004604   0.227061   7.485168   3.027402  
+
+No coefficients
+
+
+### The results below are old results from when I used chord distance
 > summary(fit_mlpe_ibd)
 Conductance surface with 146970 vertices (11 focal) estimated by maximum likelihood
 Call:   radish(formula = dist_matrix ~ 1, data = surface, conductance_model = radish::loglinear_conductance, 
@@ -323,6 +461,18 @@ No coefficients
 ```
 ## Null vs Full model
 anova(fit_mlpe_ibd, fit_mlpe_full)
+
+### New Nei's D
+Likelihood ratio test
+Null: ~ 1
+Alt: ~ kfsuit + roads
+     logLik Df ChiSq Df(ChiSq) Pr(>Chi)  
+Null 237.52  4                           
+Alt  241.06  6 7.073         2  0.02912 *
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+### Old chord_dist
 Likelihood ratio test
 Null: ~ 1
 Alt: ~ kfsuit + roads
@@ -332,6 +482,17 @@ Alt  201.01  6 3.2145         2   0.2004
 
 ## Null vs Reduced model (suitability only)
 > anova(fit_mlpe_ibd, fit_mlpe_kfsuit)
+### New Nei's D
+Likelihood ratio test
+Null: ~ 1
+Alt: ~ kfsuit
+     logLik Df  ChiSq Df(ChiSq) Pr(>Chi)  
+Null 237.52  4                            
+Alt  240.81  5 6.5735         1  0.01035 *
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+### Old chord_dist
 Likelihood ratio test
 Null: ~ 1
 Alt: ~ kfsuit
@@ -343,6 +504,16 @@ Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’
 
 ## Null vs Reduced model (roads only)
 > anova(fit_mlpe_ibd, fit_mlpe_roads)
+
+### New Nei's D
+Likelihood ratio test
+Null: ~ 1
+Alt: ~ roads
+     logLik Df   ChiSq Df(ChiSq) Pr(>Chi)
+Null 237.52  4                           
+Alt  237.85  5 0.65508         1   0.4183
+
+### Old chord_dist
 Likelihood ratio test
 Null: ~ 1
 Alt: ~ roads
@@ -353,6 +524,18 @@ Alt  199.52  5 0.23492         1   0.6279
 
 ## Null vs Interaction model
 anova(fit_mlpe_ibd, fit_mlpe_int)
+
+### New Nei's D
+Likelihood ratio test
+Null: ~ 1
+Alt: ~ kfsuit + roads + kfsuit:roads
+     logLik Df ChiSq Df(ChiSq) Pr(>Chi)  
+Null 237.52  4                           
+Alt  241.06  7 7.073         3  0.06961 .
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+### Old chord_dist
 Likelihood ratio test
 Null: ~ 1
 Alt: ~ kfsuit + roads + kfsuit:roads
@@ -364,17 +547,22 @@ Alt  201.01  7 3.2275         3   0.3579
 ## Visualizing Results
 Let's look at the relationship between the genetic distance (chord distance) and the optimized resistance distance from our top MLPE model. These look awful!
 ```
-png("KF Optimized Resistance Distance - Full Model - 20240628.png", width = 800, height = 600)
+png("KF Optimized Resistance Distance - Nei's D Full Model - 20240702.png", width = 800, height = 600)
 plot(fitted(fit_mlpe_full, "distance"), dist_matrix, pch = 19,
      xlab = "Optimized resistance distance", ylab = "chord distance")
 dev.off()
 
-png("KF Optimized Resistance Distance - KFSuit Model - 20240628.png", width = 800, height = 600)
+png("KF Optimized Resistance Distance - Nei's D KFSuit Model - 20240702.png", width = 800, height = 600)
 plot(fitted(fit_mlpe_kfsuit, "distance"), dist_matrix, pch = 19,
      xlab = "Optimized resistance distance", ylab = "chord distance")
 dev.off()
 
-png("KF Optimized Resistance Distance - Roads Model - 20240628.png", width = 800, height = 600)
+png("KF Optimized Resistance Distance - Nei's D Roads Model - 20240702.png", width = 800, height = 600)
+plot(fitted(fit_mlpe_roads, "distance"), dist_matrix, pch = 19,
+     xlab = "Optimized resistance distance", ylab = "chord distance")
+dev.off()
+
+png("KF Optimized Resistance Distance - Nei's D Interaction Model - 20240702.png", width = 800, height = 600)
 plot(fitted(fit_mlpe_roads, "distance"), dist_matrix, pch = 19,
      xlab = "Optimized resistance distance", ylab = "chord distance")
 dev.off()
@@ -386,22 +574,22 @@ fitted_conductance_kfsuit <- conductance(surface, fit_mlpe_kfsuit, quantile = 0.
 fitted_conductance_roads <- conductance(surface, fit_mlpe_roads, quantile = 0.95)
 fitted_conductance_int <- conductance(surface, fit_mlpe_int, quantile = 0.95)
 
-png("KF Fitted Conductance - Full Model - 20240628.png", width = 800, height = 600)
+png("KF Fitted Conductance - Nei's D Full Model - 20240702.png", width = 800, height = 600)
 plot(log(fitted_conductance_full[["est"]]), 
      main = "Fitted conductance surface\n(kfsuit + roads)")
 dev.off()
 
-png("KF Fitted Conductance - kfsuit - 20240628.png", width = 800, height = 600)
+png("KF Fitted Conductance - Nei's D KFSuit Model - 20240702.png", width = 800, height = 600)
 plot(log(fitted_conductance_kfsuit[["est"]]), 
      main = "Fitted conductance surface\n(kfsuit)")
 dev.off()
 
-png("KF Fitted Conductance - roads - 20240628.png", width = 800, height = 600)
+png("KF Fitted Conductance - Nei's D Roads Model - 20240702.png", width = 800, height = 600)
 plot(log(fitted_conductance_roads[["est"]]), 
      main = "Fitted conductance surface\n(roads)")
 dev.off()
 
-png("KF Fitted Conductance - interaction model - 20240628.png", width = 800, height = 600)
+png("KF Fitted Conductance - Nei's D Interaction Model - 20240702.png", width = 800, height = 600)
 plot(log(fitted_conductance_int[["est"]]), 
      main = "Fitted conductance surface\n(kfsuit*roads)")
 dev.off()
