@@ -167,8 +167,11 @@ Looks good!
 
 I'm going to try to rescale my roads data to make it more in line with the habitat quitability layer. This line of code should convert any non zero cells to 100.
 ```
-gdal_calc.py -A InterstateHwy5_rasterized_new.tif --outfile=InterstateHwy5_rasterized_rescaled.tif --calc="100*(A!=0)" --NoDataValue=-999
+gdal_calc.py -A InterstateHwy5_rasterized_new.tif --outfile=InterstateHwy5_rasterized_rescaled_road100.tif --calc="(A==0)*1 + (A!=0)*100" --NoDataValue=0
 
-python plot_raster.py InterstateHwy5_rasterized_rescaled.tif InterstateHwy5_rasterized_rescaled.png
+gdal_calc.py -A InterstateHwy5_rasterized_new.tif --outfile=InterstateHwy5_rasterized_rescaled_road10.tif --calc="(A==0)*1 + (A!=0)*10" --NoDataValue=0
+
+python plot_raster.py InterstateHwy5_rasterized_rescaled_road100.tif InterstateHwy5_rasterized_rescaled_road100.png
+python plot_raster.py InterstateHwy5_rasterized_rescaled_road10.tif InterstateHwy5_rasterized_rescaled_road10.png
 ```
 
