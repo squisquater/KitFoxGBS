@@ -114,38 +114,42 @@ python plot_raster.py CaliforniaMajorHighways_rasterized.tif CaliforniaMajorHigh
 
 I realized that this raster file is actually just based on land cover types, not the full model described in Cypher et al. (2013) which incorporates ruggedness and NDVI. I now have the correct model and will regenerate my files accordingly. 
 
-I'll start by reprojecting the suitability layer to be in NAD1983 to match the CRS of roads .shp layer I want to convert into a raster layer so these can be modeled together in Radish.
-```
-gdalwarp -t_srs EPSG:3310 ESRP-kfsuit-continuous.tif ESRP-kfsuit-continuous-reprojected.tif
-```
-This model has the region outside of the study area classified with a value of 128 but I reclassified it as 0. I can't remove it entirely since it's a raster layer and need to reflect a grid.
+This model has the region outside of the study area classified with a value of 128 but I reclassified it as 0 which will mean "no data" in Radish. Before doing that I want to convert any esizting 0 values to 1. 
 
 ```
-gdal_calc.py -A ESRP-kfsuit-continuous-reprojected.tif --outfile=ESRP-kfsuit-continuous-reprojected-modified.tif --calc="A*(A>=0)*(A<=100)" --NoDataValue=0
+gdal_calc.py -A ESRP-kfsuit-continuous.tif --outfile=ESRP-kfsuit-continuous-temp2.tif --calc="A*(A!=0) + (A==0)*1" --NoDataValue=0
+
+gdal_calc.py -A ESRP-kfsuit-continuous-temp2.tif --outfile=ESRP-kfsuit-continuous-modified.tif --calc="A*(A>=0)*(A<=100)" --NoDataValue=0
 ```
 Plot it!
 ```
-python plot_raster.py ESRP-kfsuit-continuous-reprojected-modified.tif ESRP-kfsuit-continuous-reprojected-modified.png
+python plot_raster.py ESRP-kfsuit-continuous-modified.tif ESRP-kfsuit-continuous-modified.png
+```
+Now reproject the suitability layer to be in NAD1983 to match the CRS of roads .shp layer I want to convert into a raster layer so these can be modeled together in Radish.
+```
+gdalwarp -t_srs EPSG:3310 -dstnodata 0 ESRP-kfsuit-continuous-modified.tif ESRP-kfsuit-continuous-modified-reprojected.tif
+
+#gdalwarp -t_srs EPSG:3310 ESRP-kfsuit-continuous.tif ESRP-kfsuit-continuous-reprojected.tif
 ```
 Resample the raster layer at 1000m x 1000m resolution
 ```
-gdalwarp -tr 1000 1000 -r bilinear ESRP-kfsuit-continuous-reprojected-modified.tif ESRP-kfsuit-continuous-reprojected-modified-1000x1000.tif
+gdalwarp -tr 1000 1000 -r bilinear ESRP-kfsuit-continuous-modified-reprojected.tif ESRP-kfsuit-continuous-modified-reprojected-1000x1000.tif
 ```
 Plot it!
 ```
-python plot_raster.py ESRP-kfsuit-continuous-reprojected-modified-1000x1000.tif ESRP-kfsuit-continuous-reprojected-modified-1000x1000.png
+python plot_raster.py ESRP-kfsuit-continuous-modified-reprojected-1000x1000.tif ESRP-kfsuit-continuous-modified-reprojected-1000x1000.png
 ```
 
 Determine the extent and resolution of the habitat suitability layer so you can parameterize the conversion of your roads shapefile layer.
 ```
-gdalinfo ESRP-kfsuit-continuous-reprojected-modified-1000x1000.tif
+gdalinfo ESRP-kfsuit-continuous-modified-reprojected-1000x1000.tif
 ```
 >You can see here the pixel size is 1000 x 1000 
->You can parameterize the spatial extent by providing the lower left ( -208966.199, -394212.832) and upper right (  136033.801,   31787.168) coordinates.
+>You can parameterize the spatial extent by providing the lower left ( -208966.200, -394212.821) and upper right   136033.800,   31787.179) coordinates.
 
 Rasterize the California Major Roads shapefile using the the same extent and resolution as the habitat suitablitity layer.
 ```
-gdal_rasterize -burn 1 -tr 1000 1000 -te -208966.199 -394212.832 136033.801 31787.168 -a_srs EPSG:3310 -l CaliforniaMajorRoads_Reprojected CaliforniaMajorRoads_Reprojected.shp CaliforniaMajorRoads_rasterized_new.tif
+gdal_rasterize -burn 1 -tr 1000 1000 -te -208966.200 -394212.821 136033.800 31787.179 -a_srs EPSG:3310 -l CaliforniaMajorRoads_Reprojected CaliforniaMajorRoads_Reprojected.shp CaliforniaMajorRoads_rasterized_new.tif
 ```
 Plot it to make sure it worked!
 ```
@@ -153,7 +157,7 @@ python plot_raster.py CaliforniaMajorRoads_rasterized_new.tif CaliforniaMajorRoa
 ```
 I also want to rasterize I-5 only. I have a sepaate shapefile for this major highway.
 ```
-gdal_rasterize -burn 1 -tr 1000 1000 -te -208966.199 -394212.832 136033.801 31787.168 -a_srs EPSG:3310 -l InterstateHwy5 InterstateHwy5.shp InterstateHwy5_rasterized_new.tif
+gdal_rasterize -burn 1 -tr 1000 1000 -te -208966.200 -394212.821 136033.800 31787.179 -a_srs EPSG:3310 -l InterstateHwy5 InterstateHwy5.shp InterstateHwy5_rasterized_new.tif
 ```
 Plot it to make sure it worked!
 ```
