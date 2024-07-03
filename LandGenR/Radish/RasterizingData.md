@@ -154,3 +154,8 @@ Plot it to make sure it worked!
 python plot_raster.py InterstateHwy5_rasterized_new.tif InterstateHwy5_rasterized_new.png
 ```
 Looks good!
+
+I also needed to reproject the suitability layer so these were both in the same CRS for use in Radish
+```
+gdalwarp -t_srs EPSG:3310 /group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/ESRP-kfsuit-continuous-modified-1000x1000.tif /group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/ESRP-kfsuit-continuous-reprojected.tif
+```
