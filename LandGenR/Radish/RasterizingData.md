@@ -111,3 +111,46 @@ Plot it to make sure it worked!
 ```
 python plot_raster.py CaliforniaMajorHighways_rasterized.tif CaliforniaMajorHighways_rasterized.png
 ```
+
+I realized that this raster file is actually just based on land cover types, not the full model described in Cypher et al. (2013) which incorporates ruggedness and NDVI. I now have the correct model and will regenerate my files accordingly. 
+
+This model had the region outside of the studye area classified with a value of 128 but I reclassified it as 0. I can't remove it entirely since it's a raster layer and need to reflect a grid.
+```
+gdal_calc.py -A ESRP-kfsuit-continuous.tif --outfile=ESRP-kfsuit-continuous-modified.tif --calc="A*(A>=0)*(A<=100)" --NoDataValue=0
+```
+Plot it!
+```
+python plot_raster.py ESRP-kfsuit-continuous-modified.tif ESRP-kfsuit-continuous-modified.png
+```
+Resample the raster layer at 1000m x 1000m resolution
+```
+gdalwarp -tr 1000 1000 -r bilinear ESRP-kfsuit-continuous-modified.tif ESRP-kfsuit-continuous-modified-1000x1000.tif
+```
+Plot it!
+```
+python plot_raster.py ESRP-kfsuit-continuous-modified-1000x1000.tif ESRP-kfsuit-continuous-modified-1000x1000.png
+```
+Determine the extent and resolution of the habitat suitability layer so you can parameterize the conversion of your roads shapefile layer.
+```
+gdalinfo ESRP-kfsuit-continuous-modified-1000x1000.tif
+```
+>You can see here the pixel size is 1000 x 1000 
+>You can parameterize the spatial extent by providing the lower left ( -208873.516, -394388.656) and upper right (  136126.484,   31611.344) coordinates.
+
+Rasterize the California Major Roads shapefile using the the same extent and resolution as the habitat suitablitity layer.
+```
+gdal_rasterize -burn 1 -tr 1000 1000 -te -208873.516 -394388.656 136126.484 31611.344 -a_srs EPSG:3310 -l CaliforniaMajorRoads_Reprojected CaliforniaMajorRoads_Reprojected.shp CaliforniaMajorRoads_rasterized_new.tif
+```
+Plot it to make sure it worked!
+```
+python plot_raster.py CaliforniaMajorRoads_rasterized_new.tif CaliforniaMajorRoads_rasterized_new.png
+```
+I also want to rasterize I-5 only. I have a sepaate shapefile for this major highway.
+```
+gdal_rasterize -burn 1 -tr 1000 1000 -te -208873.516 -394388.656 136126.484 31611.344 -a_srs EPSG:3310 -l InterstateHwy5 InterstateHwy5.shp InterstateHwy5_rasterized_new.tif
+```
+Plot it to make sure it worked!
+```
+python plot_raster.py InterstateHwy5_rasterized_new.tif InterstateHwy5_rasterized_new.png
+```
+Looks good!
