@@ -117,15 +117,15 @@ dist_df <- read.table("KF_NeisD_matrix.txt", sep = "\t", header = TRUE, row.name
 dist_matrix <- as.matrix(dist_df)
 
 # Run Radish
-myRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/KitFox-ESARPmodel-Raster1000x1000-FillAllCells.tif")
-
+#myRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/KitFox-ESARPmodel-Raster1000x1000-FillAllCells.tif")
+myRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/ESRP-kfsuit-continuous-modified-reprojected-1000x1000.tif")
 
 # Testing out different road rasters
 #roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/CaliforniaRoads-Reprojected-1000x1000-FillAllCells.tif")
 #roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/CaliforniaRoads-Reprojected-1000x1000-MajorRoadsOnly.tif")
 #roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/CaliforniaMajorRoads_rasterized.tif")
 #roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/CaliforniaMajorHighways_rasterized.tif")
-roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/InterstateHwy5_rasterized.tif")
+roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/InterstateHwy5_rasterized_new.tif")
 
 
 # scaling spatial covariates helps avoid numeric overflow
@@ -156,12 +156,12 @@ df_projected <- spTransform(df, CRSobj = raster_crs)
 #Extract to a spatial points object
 df_points <- SpatialPoints(coordinates(df_projected), proj4string = CRS(proj4string(df_projected)))
 
-png("KFsuit-20240702.png", width = 800, height = 600)
+png("KFsuit-20240703.png", width = 800, height = 600)
 plot(covariates[["kfsuit"]])
 points(df_points, pch = 19)
 dev.off()
 
-png("Majorroads-20240702.png", width = 800, height = 600)
+png("Majorroads-20240703.png", width = 800, height = 600)
 plot(covariates[["roads"]])
 points(df_points, pch = 19)
 dev.off()
@@ -552,23 +552,23 @@ Alt  201.01  7 3.2275         3   0.3579
 ## Visualizing Results
 Let's look at the relationship between the genetic distance (chord distance) and the optimized resistance distance from our top MLPE model. These look awful!
 ```
-png("KF Optimized Resistance Distance - Nei's D Full Model no Urban - 20240702.png", width = 800, height = 600)
+png("KF Optimized Resistance Distance - Nei's D Full Model - 20240703.png", width = 800, height = 600)
 plot(fitted(fit_mlpe_full, "distance"), dist_matrix, pch = 19,
      xlab = "Optimized resistance distance", ylab = "chord distance")
 dev.off()
 
-png("KF Optimized Resistance Distance - Nei's D KFSuit Model - 20240702.png", width = 800, height = 600)
+png("KF Optimized Resistance Distance - Nei's D KFSuit Model - 20240703.png", width = 800, height = 600)
 plot(fitted(fit_mlpe_kfsuit, "distance"), dist_matrix, pch = 19,
      xlab = "Optimized resistance distance", ylab = "chord distance")
 dev.off()
 
-png("KF Optimized Resistance Distance - Nei's D Roads Model - 20240702.png", width = 800, height = 600)
+png("KF Optimized Resistance Distance - Nei's D Roads Model - 20240703.png", width = 800, height = 600)
 plot(fitted(fit_mlpe_roads, "distance"), dist_matrix, pch = 19,
      xlab = "Optimized resistance distance", ylab = "chord distance")
 dev.off()
 
-png("KF Optimized Resistance Distance - Nei's D Interaction Model - 20240702.png", width = 800, height = 600)
-plot(fitted(fit_mlpe_roads, "distance"), dist_matrix, pch = 19,
+png("KF Optimized Resistance Distance - Nei's D Interaction Model - 20240703.png", width = 800, height = 600)
+plot(fitted(fit_mlpe_int, "distance"), dist_matrix, pch = 19,
      xlab = "Optimized resistance distance", ylab = "chord distance")
 dev.off()
 ```
@@ -579,22 +579,22 @@ fitted_conductance_kfsuit <- conductance(surface, fit_mlpe_kfsuit, quantile = 0.
 fitted_conductance_roads <- conductance(surface, fit_mlpe_roads, quantile = 0.95)
 fitted_conductance_int <- conductance(surface, fit_mlpe_int, quantile = 0.95)
 
-png("KF Fitted Conductance - Nei's D Full Model no Urban - 20240702.png", width = 800, height = 600)
+png("KF Fitted Conductance - Nei's D Full Model - 20240703.png", width = 800, height = 600)
 plot(log(fitted_conductance_full[["est"]]), 
      main = "Fitted conductance surface\n(kfsuit + roads)")
 dev.off()
 
-png("KF Fitted Conductance - Nei's D KFSuit Model - 20240702.png", width = 800, height = 600)
+png("KF Fitted Conductance - Nei's D KFSuit Model - 20240703.png", width = 800, height = 600)
 plot(log(fitted_conductance_kfsuit[["est"]]), 
      main = "Fitted conductance surface\n(kfsuit)")
 dev.off()
 
-png("KF Fitted Conductance - Nei's D Roads Model - 20240702.png", width = 800, height = 600)
+png("KF Fitted Conductance - Nei's D Roads Model - 20240703.png", width = 800, height = 600)
 plot(log(fitted_conductance_roads[["est"]]), 
      main = "Fitted conductance surface\n(roads)")
 dev.off()
 
-png("KF Fitted Conductance - Nei's D Interaction Model - 20240702.png", width = 800, height = 600)
+png("KF Fitted Conductance - Nei's D Interaction Model - 20240703.png", width = 800, height = 600)
 plot(log(fitted_conductance_int[["est"]]), 
      main = "Fitted conductance surface\n(kfsuit*roads)")
 dev.off()
@@ -607,7 +607,7 @@ grid <- radish_grid(theta, dist_matrix ~ kfsuit + roads, surface,
 
 library(ggplot2)
 
-png("KF LikelihoodSurface - full model 20240702.png", width = 800, height = 600)
+png("KF LikelihoodSurface - full model 20240703.png", width = 800, height = 600)
 ggplot(data.frame(loglik=grid$loglik, grid$theta), 
        aes(x=kfsuit, y=roads)) + 
   geom_tile(aes(fill=loglik)) + 
