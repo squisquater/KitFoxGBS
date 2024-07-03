@@ -125,8 +125,9 @@ myRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/ESRP-kfsuit-c
 #roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/CaliforniaRoads-Reprojected-1000x1000-MajorRoadsOnly.tif")
 #roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/CaliforniaMajorRoads_rasterized.tif")
 #roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/CaliforniaMajorHighways_rasterized.tif")
-roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/InterstateHwy5_rasterized_new.tif")
-
+#roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/InterstateHwy5_rasterized_new.tif")
+#roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/InterstateHwy5_rasterized_rescaled_road100.tif")
+roadRaster <- raster("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/InterstateHwy5_rasterized_rescaled_road10.tif")
 
 # scaling spatial covariates helps avoid numeric overflow
 covariates <- raster::stack(list(kfsuit = raster::scale(myRaster),
@@ -134,7 +135,7 @@ covariates <- raster::stack(list(kfsuit = raster::scale(myRaster),
                                 
 
 #Load in spatial points dataframe
-#df <- data.frame(lon = c(-119.063, -118.769, -120.301, -119.836, -120.263, -119.607, -120.878, -120.749, -119.579, -119.462, -120.043), lat = c(35.366, 35.354, 35.85, 35.174, 36.187, 35.375, 36.644, 36.569, 35.691, 35.139, 35.372))
+df <- data.frame(lon = c(-119.063, -118.769, -120.301, -119.836, -120.263, -119.607, -120.878, -120.749, -119.579, -119.462, -120.043), lat = c(35.366, 35.354, 35.85, 35.174, 36.187, 35.375, 36.644, 36.569, 35.691, 35.139, 35.372))
 
 ##No Urban (bakersfield + bena)
 df <- data.frame(lon = c(-120.301, -119.836, -120.263, -119.607, -120.878, -120.749, -119.579, -119.462, -120.043), lat = c(35.85, 35.174, 36.187, 35.375, 36.644, 36.569, 35.691, 35.139, 35.372))
@@ -625,9 +626,11 @@ distances <- radish_distance(theta, ~kfsuit + roads,
                              surface, radish::loglinear_conductance)
 
 ibd <- which(theta[,1] == 0 & theta[,2] == 0)
-plot(distances$distance[,,ibd], melip.Fst, pch = 19, 
-     xlab = "Null resistance distance (IBD)", ylab = "Fst")
 
+png("KF Null resistance distance (IBD) - 20240703.png", width = 800, height = 600)
+plot(distances$distance[,,ibd], dist_matrix, pch = 19, 
+     xlab = "Null resistance distance (IBD)", ylab = "Nei's D")
+dev.off()
 
 ############### OLD IGNORE FOR NOW !!! ####################
 
