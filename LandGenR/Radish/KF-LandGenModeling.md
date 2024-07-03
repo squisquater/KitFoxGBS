@@ -136,8 +136,12 @@ covariates <- raster::stack(list(kfsuit = raster::scale(myRaster),
 #Load in spatial points dataframe
 #df <- data.frame(lon = c(-119.063, -118.769, -120.301, -119.836, -120.263, -119.607, -120.878, -120.749, -119.579, -119.462, -120.043), lat = c(35.366, 35.354, 35.85, 35.174, 36.187, 35.375, 36.644, 36.569, 35.691, 35.139, 35.372))
 
+##No Urban (bakersfield + bena)
+df <- data.frame(lon = c(-120.301, -119.836, -120.263, -119.607, -120.878, -120.749, -119.579, -119.462, -120.043), lat = c(35.85, 35.174, 36.187, 35.375, 36.644, 36.569, 35.691, 35.139, 35.372))
+
+
 #Alt SPDF that doesn't have carrizo!
-df <- data.frame(lon = c(-119.063, -118.769, -120.301, -120.263, -119.607, -120.878, -120.749, -119.579, -119.462, -120.043), lat = c(35.366, 35.354, 35.85, 36.187, 35.375, 36.644, 36.569, 35.691, 35.139, 35.372))
+#df <- data.frame(lon = c(-119.063, -118.769, -120.301, -120.263, -119.607, -120.878, -120.749, -119.579, -119.462, -120.043), lat = c(35.366, 35.354, 35.85, 36.187, 35.375, 36.644, 36.569, 35.691, 35.139, 35.372))
 
 #Convert to spatial points dataframe
 coordinates(df) <- ~ lon + lat
@@ -548,7 +552,7 @@ Alt  201.01  7 3.2275         3   0.3579
 ## Visualizing Results
 Let's look at the relationship between the genetic distance (chord distance) and the optimized resistance distance from our top MLPE model. These look awful!
 ```
-png("KF Optimized Resistance Distance - Nei's D Full Model - 20240702.png", width = 800, height = 600)
+png("KF Optimized Resistance Distance - Nei's D Full Model no Urban - 20240702.png", width = 800, height = 600)
 plot(fitted(fit_mlpe_full, "distance"), dist_matrix, pch = 19,
      xlab = "Optimized resistance distance", ylab = "chord distance")
 dev.off()
@@ -575,7 +579,7 @@ fitted_conductance_kfsuit <- conductance(surface, fit_mlpe_kfsuit, quantile = 0.
 fitted_conductance_roads <- conductance(surface, fit_mlpe_roads, quantile = 0.95)
 fitted_conductance_int <- conductance(surface, fit_mlpe_int, quantile = 0.95)
 
-png("KF Fitted Conductance - Nei's D Full Model - 20240702.png", width = 800, height = 600)
+png("KF Fitted Conductance - Nei's D Full Model no Urban - 20240702.png", width = 800, height = 600)
 plot(log(fitted_conductance_full[["est"]]), 
      main = "Fitted conductance surface\n(kfsuit + roads)")
 dev.off()
@@ -602,19 +606,22 @@ grid <- radish_grid(theta, dist_matrix ~ kfsuit + roads, surface,
                     radish::loglinear_conductance, radish::mlpe)
 
 library(ggplot2)
+
+png("KF LikelihoodSurface - full model 20240702.png", width = 800, height = 600)
 ggplot(data.frame(loglik=grid$loglik, grid$theta), 
-       aes(x=forestcover, y=altitude)) + 
+       aes(x=kfsuit, y=roads)) + 
   geom_tile(aes(fill=loglik)) + 
   geom_contour(aes(z=loglik), color="black") +
   annotate(geom = "point", colour = "red",
-           x = coef(fit_mlpe)["forestcover"], 
-           y = coef(fit_mlpe)["altitude"]) +
+           x = coef(fit_mlpe_full)["kfsuit"], 
+           y = coef(fit_mlpe_full)["roads"]) +
   theme_bw() +
-  xlab(expression(theta[altitude])) +
-  ylab(expression(theta[forestcover]))
+  xlab(expression(theta[kfsuit])) +
+  ylab(expression(theta[roads]))
+  dev.off()
 
 # calculate resistance distances across grid
-distances <- radish_distance(theta, ~forestcover + altitude, 
+distances <- radish_distance(theta, ~kfsuit + roads, 
                              surface, radish::loglinear_conductance)
 
 ibd <- which(theta[,1] == 0 & theta[,2] == 0)
