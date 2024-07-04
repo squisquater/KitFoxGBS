@@ -25,6 +25,7 @@ library(LandGenCourse)
 library(terra)
 library(gdistance)
 library(sf)
+library(spdep)
 
 Load and plot the raster files
 ```
@@ -71,8 +72,8 @@ dev.off()
 ```
 Create a cost surface
 ```
-kfsuit.cost <- (100-kfsuit[[1]])/100
-roads.cost <- roads[[1]]
+kfsuit.cost <- (100-kfsuit[[1]])*0.5
+roads.cost <- roads[[1]]*5
 
 png("kfsuit.CostSurface.png", width = 800, height = 600)
 terra::plot(kfsuit.cost[[1]])
@@ -83,18 +84,95 @@ png("roads.CostSurface.png", width = 800, height = 600)
 terra::plot(roads.cost[[1]])
 terra::points(points, pch=21, col="black", bg="white", cex=2)
 dev.off()
-
-Create a single landscape conductance raster
+```
+Create a single landscape conductance raster and plot it
 ```
 cost1 <- (kfsuit.cost + roads.cost)
+
+png("KF.CostSurface-20240704.png", width = 800, height = 600)
+terra::plot(cost1[[1]])
+terra::points(points, pch=21, col="black", bg="white", cex=2)
+dev.off()
 ```
+
+tr.cost1 <- gdistance::transition(raster::raster(cost1), transitionFunction=mean, directions=8) 
+tr.cost1
+
+png("KF.TransissionLayer-20240704.png", width = 800, height = 600)
+par(mar=c(2,2,1,1))
+raster::plot(raster::raster(tr.cost1))
+dev.off()
+
+Correct for geometric distortion
+tr.cost1 <- gdistance::geoCorrection(tr.cost1,type = "c",multpl=FALSE)
+
+Plot shortest paths in space
+
+Convert SpatVector to sf object
+```
+points_sf <- st_as_sf(points)
+```
+Convert sf object to SpatialPointsDataFrame
+```
+sites.sp <- sf::as_Spatial(points_sf)
+```
+
+Plot the shortest path between two points
+```
+png("kf-cost-shortestpath-20240703.png", width = 800, height = 600)
+par(mar=c(2,2,1,2))
+AtoB <- gdistance::shortestPath(tr.cost1, origin=sites.sp[1,], 
+                                goal=sites.sp[2,], output="SpatialLines")
+raster::plot(raster::raster(tr.cost1), xlab="x coordinate (m)", 
+             ylab="y coordinate (m)",legend.lab="Conductance")
+lines(AtoB, col="red", lwd=2)
+points(sites.sp[1:2,])
+dev.off()
+```
+What about for all of them!
+```
+png("kf-cost-shortestpathAll-20240703.png", width = 800, height = 600)
+par(mar=c(2,2,1,2))
+raster::plot(raster::raster(tr.cost1), xlab="x coordinate (m)", 
+             ylab="y coordinate (m)", legend.lab="Conductance")
+points(sites.sp)
+
+Neighbours <- spdep::tri2nb(sites.sp@coords, row.names = sites.sp$SiteName)
+
+plot(Neighbours, sites.sp@coords, col="darkgrey", add=TRUE)
+for(i in 1:length(Neighbours))
+{
+  for(j in Neighbours[[i]][Neighbours[[i]] > i])
+  {
+    AtoB <- gdistance::shortestPath(tr.cost1, origin=sites.sp[i,], 
+                                goal=sites.sp[j,], output="SpatialLines")
+    lines(AtoB, col="red", lwd=1.5)
+  }
+}
+dev.off()
+```
+
+
+
+
+
+###### OLD
+
+#Convert SpatRaster to RasterLayer
+cost1_raster <- raster::raster(cost1)
+
 Convert KF conductance into effective distance
 ```
-tr.cost1 <- gdistance::transition(raster::raster(cost1), transitionFunction=mean, directions=8) 
+tr.cost1 <- gdistance::transition(cost1_raster, transitionFunction=mean, directions=8) 
 ```
 Visually inspect the raster
+
+tr.cost1_raster <- raster::raster(tr.cost1)
+
+raster::plot(raster::raster(tr.cost1))
 ```
-png("KF.EffectiveDistance-20240703.png", width = 800, height = 600)
+png("KF.EffectiveDistance-20240704.png", width = 800, height = 600)
+par(mar=c(2,2,1,1))
 raster::plot(raster::raster(tr.cost1))
 dev.off()
 ```
