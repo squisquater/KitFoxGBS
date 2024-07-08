@@ -182,3 +182,9 @@ python plot_raster.py InterstateHwy5_rasterized_rescaled_road10.tif InterstateHw
 ```
 ### gdistance input files
 
+```
+gdal_calc.py -A ESRP-kfsuit-continuous.tif --outfile=ESRP-kfsuit-continuous-modified.tif --calc="(A==0)*1 + (A!=0)*(A!=128)*A + (A==128)*0"
+```
+
+
+
