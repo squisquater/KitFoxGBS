@@ -183,8 +183,37 @@ python plot_raster.py InterstateHwy5_rasterized_rescaled_road10.tif InterstateHw
 ### gdistance input files
 
 ```
-gdal_calc.py -A ESRP-kfsuit-continuous.tif --outfile=ESRP-kfsuit-continuous-modified.tif --calc="(A==0)*1 + (A!=0)*(A!=128)*A + (A==128)*0"
+gdal_calc.py -A ESRP-kfsuit-continuous.tif --outfile=ESRP-kfsuit-continuous-modified-gdal.tif --calc="(A==0)*1 + (A!=0)*(A!=128)*A + (A==128)*0"
 ```
+Now reproject the suitability layer to be in NAD1983 to match the CRS of roads .shp layer I want to convert into a raster layer so these can be modeled together in Radish.
+```
+gdalwarp -t_srs EPSG:3310 -dstnodata 0 ESRP-kfsuit-continuous-modified-gdal.tif ESRP-kfsuit-continuous-modified-gdal-reprojected.tif
+```
+Resample the raster layer at 1000m x 1000m resolution
+```
+gdalwarp -tr 1000 1000 -r bilinear ESRP-kfsuit-continuous-modified-gdal-reprojected.tif ESRP-kfsuit-continuous-modified-gdal-reprojected-1000x1000.tif
+```
+Check the extent of this new layer
+```
+gdalinfo ESRP-kfsuit-continuous-modified-gdal-reprojected-1000x1000.tif
+```
+>You can see here the pixel size is 1000 x 1000 
+>You can parameterize the spatial extent by providing the lower left (-208966.200, -394212.821) and upper right (136033.800,   31787.179) coordinates.
 
-
+Rasterize the California Major Roads shapefile using the the same extent and resolution as the habitat suitablitity layer.
+```
+gdal_rasterize -burn 1 -tr 1000 1000 -te -208966.200 -394212.821 136033.800 31787.179 -a_srs EPSG:3310 -l CaliforniaMajorRoads_Reprojected CaliforniaMajorRoads_Reprojected.shp CaliforniaMajorRoads_rasterized_new.tif
+```
+Plot it to make sure it worked!
+```
+python plot_raster.py CaliforniaMajorRoads_rasterized_new.tif CaliforniaMajorRoads_rasterized_new.png
+```
+I also want to rasterize I-5 only. I have a sepaate shapefile for this major highway.
+```
+gdal_rasterize -burn 1 -tr 1000 1000 -te -208966.200 -394212.821 136033.800 31787.179 -a_srs EPSG:3310 -l InterstateHwy5 InterstateHwy5.shp InterstateHwy5_rasterized_new.tif
+```
+Plot it to make sure it worked!
+```
+python plot_raster.py InterstateHwy5_rasterized_new.tif InterstateHwy5_rasterized_new.png
+```
 
