@@ -2,6 +2,9 @@ This file has instructions for how to prepare your spatial data to be run in a l
 
 I already have a rasterized habitat suitability model I will be using and my goal here is to take a road shapefile layer and rasterize it so that it has the same extent and resoltuion as my habitat suitability model.
 
+### Radish Input Files - OLD
+*I have since realized this is just a veg classificatiuon layer not the fill suitabbility model. See the next section for the updated raster files*
+
 * Habitat Suitability Model Raster Layer - KitFox-ESARPmodel-Raster1000x1000.tif
 ![Raster Image](KitFox-ESARPmodel-Raster1000x1000.png)
 * California Major Roads Shapefile - CaliforniaMajorRoads_Reprojected.shp
@@ -114,8 +117,11 @@ python plot_raster.py CaliforniaMajorHighways_rasterized.tif CaliforniaMajorHigh
 
 I realized that this raster file is actually just based on land cover types, not the full model described in Cypher et al. (2013) which incorporates ruggedness and NDVI. I now have the correct model and will regenerate my files accordingly. 
 
-This model has the region outside of the study area classified with a value of 128 but I reclassified it as 0 which will mean "no data" in Radish. Before doing that I want to convert any esizting 0 values to 1. 
+This model has the region outside of the study area classified with a value of 128 but I reclassified it as 0 which will mean "no data" in Radish. Before doing that I want to convert any existing 0 values to 1. 
 
+There seems to be some discrepancy between how different downstream approaches (Radish vs Circuitscape-like approach) want the "no data" coded in the raster layer. Still trying to sort this out. But the code below should give input files that work for radish. Head to the next section for generating input rasters for use with gdistance (i.e. calculating least cost vs commute time)
+
+### Radish Input Files - NEW
 ```
 gdal_calc.py -A ESRP-kfsuit-continuous.tif --outfile=ESRP-kfsuit-continuous-temp2.tif --calc="A*(A!=0) + (A==0)*1" --NoDataValue=0
 
@@ -174,4 +180,5 @@ gdal_calc.py -A InterstateHwy5_rasterized_new.tif --outfile=InterstateHwy5_raste
 python plot_raster.py InterstateHwy5_rasterized_rescaled_road100.tif InterstateHwy5_rasterized_rescaled_road100.png
 python plot_raster.py InterstateHwy5_rasterized_rescaled_road10.tif InterstateHwy5_rasterized_rescaled_road10.png
 ```
+### gdistance input files
 
