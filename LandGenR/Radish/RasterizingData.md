@@ -183,15 +183,21 @@ python plot_raster.py InterstateHwy5_rasterized_rescaled_road10.tif InterstateHw
 ### gdistance input files
 
 ```
-gdal_calc.py -A ESRP-kfsuit-continuous.tif --outfile=ESRP-kfsuit-continuous-modified-gdal.tif --calc="(A==0)*1 + (A!=0)*(A!=128)*A + (A==128)*0"
+gdal_calc.py -A ESRP-kfsuit-continuous.tif --outfile=ESRP-kfsuit-continuous-modified-gdal-5.tif --calc="(A==0)*1 + (A!=0)*(A!=128)*A + (A==128)*0"
 ```
 Now reproject the suitability layer to be in NAD1983 to match the CRS of roads .shp layer I want to convert into a raster layer so these can be modeled together in Radish.
+
+First set the no data value using gdal_translate
 ```
-gdalwarp -t_srs EPSG:3310 -dstnodata 0 ESRP-kfsuit-continuous-modified-gdal.tif ESRP-kfsuit-continuous-modified-gdal-reprojected.tif
+gdal_translate -a_nodata 255 ESRP-kfsuit-continuous-modified-gdal-5.tif ESRP-kfsuit-continuous-modified-gdal-5-nodata.tif
+```
+The reproject with gdalwarp
+```
+gdalwarp -t_srs EPSG:3310 -dstnodata 255 ESRP-kfsuit-continuous-modified-gdal-5-nodata.tif ESRP-kfsuit-continuous-modified-gdal-5-reprojected.tif
 ```
 Resample the raster layer at 1000m x 1000m resolution
 ```
-gdalwarp -tr 1000 1000 -r bilinear ESRP-kfsuit-continuous-modified-gdal-reprojected.tif ESRP-kfsuit-continuous-modified-gdal-reprojected-1000x1000.tif
+gdalwarp -tr 1000 1000 -r bilinear ESRP-kfsuit-continuous-modified-gdal-5-reprojected.tif ESRP-kfsuit-continuous-modified-gdal-5-reprojected-1000x1000.tif
 ```
 Check the extent of this new layer
 ```
@@ -208,7 +214,7 @@ Plot it to make sure it worked!
 ```
 python plot_raster.py CaliforniaMajorRoads_rasterized_new.tif CaliforniaMajorRoads_rasterized_new.png
 ```
-I also want to rasterize I-5 only. I have a sepaate shapefile for this major highway.
+I also want to rasterize I-5 only. I have a separate shapefile for this major highway.
 ```
 gdal_rasterize -burn 1 -tr 1000 1000 -te -208966.200 -394212.821 136033.800 31787.179 -a_srs EPSG:3310 -l InterstateHwy5 InterstateHwy5.shp InterstateHwy5_rasterized_new.tif
 ```
