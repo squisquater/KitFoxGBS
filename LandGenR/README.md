@@ -32,7 +32,7 @@ Load and plot the raster files
 #myRaster <- rast("/group/ctbrowngrp2/sophiepq/KitFoxGBS/Omniscape/KitFox-ESARPmodel-Raster30x30-NEWmod01.tif")
 #kfsuit <- rast("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/KitFox-ESARPmodel-Raster1000x1000-FillAllCells.tif")
 #kfsuit <- rast("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/ESRP-kfsuit-continuous-modified-reprojected-1000x1000.tif")
-kfsuit <- rast("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/ESRP-kfsuit-continuous-modified4.tif")
+kfsuit <- rast("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/ESRP-kfsuit-continuous-modified-gdal-reprojected-1000x1000.tif")
 png("kfsuit-20240708.png", width = 800, height = 600)
 terra::plot(kfsuit)
 dev.off()
@@ -116,31 +116,49 @@ Create a single landscape conductance raster and plot it
 conductance1 <- (kfsuit.conductance + roads.conductance)
 conductance1 <- (kfsuit.conductance)
 
-png("KF.ConductanceSurface-20240704.png", width = 800, height = 600)
+png("KF.ConductanceSurface-20240708.png", width = 800, height = 600)
 terra::plot(conductance1[[1]])
 terra::points(points, pch=21, col="black", bg="white", cex=2)
 dev.off()
 ```
-Creat a transition layer
+
+## Read in Genetic Distance
+```
+genDist <- read.table("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/KF_NeisD_matrix.txt", sep = "\t", header = TRUE, row.names = 1)
+genDist <- as.dist(genDist)
+```
+## Create a geographic distance matrix
+```
+coords <- df[, 1:2]
+geoDist <- pointDistance(coords, longlat = TRUE)
+```
+*How well does geographic distance predict genetic distance?*
+```
+cor(genDist, geoDist)
+[1] 0.2498877
+```
+## Let's see if least-cost distance or resistance distance are better predictors of genetic distance
+
+### Create a transition layer
 ```
 tr.cost1 <- gdistance::transition(raster::raster(conductance1), transitionFunction=mean, directions=8) 
 tr.cost1
 
-png("KF.TransissionLayer-20240704.png", width = 800, height = 600)
+png("KF.TransissionLayer-20240708.png", width = 800, height = 600)
 par(mar=c(2,2,1,1))
 raster::plot(raster::raster(tr.cost1))
 dev.off()
 ```
-Correct for geometric distortion
+### Correct for geometric distortion
 ```
 trC.cost1 <- gdistance::geoCorrection(tr.cost1,type = "c",multpl=FALSE)
 trR.cost1 <- gdistance::geoCorrection(tr.cost1,type = "r",multpl=FALSE)
 ```
-## Plot shortest paths in space
+### Plot shortest paths in space
 
 Start by plotting the shortest path between two points
 ```
-png("kf-cost-shortestpath-20240704.png", width = 800, height = 600)
+png("kf-cost-shortestpath-20240708.png", width = 800, height = 600)
 par(mar=c(2,2,1,2))
 AtoB <- gdistance::shortestPath(trC.cost1, origin=sites.spdf[1,], 
                                 goal=sites.spdf[2,], output="SpatialLines")
@@ -152,7 +170,7 @@ dev.off()
 ```
 What about for all of them!
 ```
-png("kf-cost-shortestpathAll-20240704.png", width = 800, height = 600)
+png("kf-cost-shortestpathAll-20240708.png", width = 800, height = 600)
 par(mar=c(2,2,1,2))
 raster::plot(raster::raster(trC.cost1), xlab="x coordinate (m)", 
              ylab="y coordinate (m)", legend.lab="Conductance")
@@ -172,7 +190,6 @@ for(i in 1:length(Neighbours))
 }
 dev.off()
 ```
-## Create cost-distance matrices
 
 ### Least Cost Distance
 ```
@@ -181,7 +198,7 @@ cost1.dist <- gdistance::costDistance(trC.cost1,sites.sp)
 ### Cost-distance matrix based on random paths (similar to Circuitscape)
 I might need to use a different geocorrection (R) for this one -- that wasn't the issue. I think there's something with NA values in my raster files.... I'll explore more. For now I'm jsut working with an older kfsuit layer until I problem solve the existing layers.
 ```
-comm1.dist <- gdistance::commuteDistance(x = trC.cost1, coords = sites.sp)
+comm1.dist <- gdistance::commuteDistance(x = trR.cost1, coords = sites.sp)
 ```
 Compare cost distances
 ```
@@ -207,3 +224,13 @@ png("CorrPlot.png", width = 800, height = 600)
 plot(dist_df$comm1.dist, dist_df$cost1.dist, xlab = "Commute Distance", ylab = "Cost Distance", main = "Correlation Plot")
 dev.off()
 ```
+
+### How well do these predict genetic distance?
+cor(cost1.dist, geoDist)
+[1] 0.9990757
+
+cor(comm1.dist, geoDist)
+[1] 0.9726797
+
+## Mantel Tests
+
