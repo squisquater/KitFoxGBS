@@ -201,8 +201,18 @@ gdalwarp -tr 1000 1000 -r bilinear ESRP-kfsuit-continuous-modified-gdal-5-reproj
 ```
 Check the extent of this new layer
 ```
-gdalinfo ESRP-kfsuit-continuous-modified-gdal-reprojected-1000x1000.tif
+gdalinfo ESRP-kfsuit-continuous-modified-gdal-5-reprojected-1000x1000.tif
 ```
+It's still turning the 0s into no data so I'm going to try adn put them back in at the end...
+```
+gdal_calc.py -A ESRP-kfsuit-continuous-modified-gdal-5-reprojected-1000x1000.tif --outfile=ESRP-kfsuit-continuous-modified-gdal-5-reprojected-1000x1000-filled.tif --calc="A*(A!=0) + 0*(A==0)" --NoDataValue=0
+```
+That's not working. I'm going to try and remove the no data value entirely.
+```
+gdal_translate -a_nodata none ESRP-kfsuit-continuous-modified-gdal-5-reprojected-1000x1000.tif SRP-kfsuit-continuous-modified-gdal-5-reprojected-1000x1000-nodata.tif
+```
+YESSS! finally. okay I definitely need to streamline this... 
+
 >You can see here the pixel size is 1000 x 1000 
 >You can parameterize the spatial extent by providing the lower left (-208966.200, -394212.821) and upper right (136033.800,   31787.179) coordinates.
 
