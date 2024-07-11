@@ -209,7 +209,7 @@ gdal_calc.py -A ESRP-kfsuit-continuous-modified-gdal-5-reprojected-1000x1000.tif
 ```
 That's not working. I'm going to try and remove the no data value entirely.
 ```
-gdal_translate -a_nodata none ESRP-kfsuit-continuous-modified-gdal-5-reprojected-1000x1000.tif SRP-kfsuit-continuous-modified-gdal-5-reprojected-1000x1000-nodata.tif
+gdal_translate -a_nodata none ESRP-kfsuit-continuous-modified-gdal-5-reprojected-1000x1000.tif ESRP-kfsuit-continuous-modified-gdal-5-reprojected-1000x1000-nodata.tif
 ```
 YESSS! finally. okay I definitely need to streamline this... 
 
