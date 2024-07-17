@@ -233,3 +233,244 @@ Plot it to make sure it worked!
 python plot_raster.py InterstateHwy5_rasterized_new.tif InterstateHwy5_rasterized_new.png
 ```
 
+### Creating a raster layer that calculates distance from nearest core or satellite pop. 
+Again I want this to match the scale and extent of the other raster layers
+>pixel size is 1000 x 1000 
+>lower left (-208966.200, -394212.821) and upper right (136033.800,   31787.179) coordinates.
+>
+```
+gdal_rasterize -burn 1 -tr 1000 1000 -te -208964.104 -394240.367 136035.896 31759.633 -a_srs EPSG:3310 -l CaliforniaMajorRoads_Reprojected CaliforniaMajorRoads_Reprojected.shp CaliforniaMajorRoads_rasterized.tif
+```
+
+```
+import numpy as np
+import pandas as pd
+from osgeo import ogr, osr, gdal
+
+# Step 1: Prepare your spatial points data
+data = {
+    'latitude': [35.366, 35.354, 35.85, 35.174, 36.187, 35.375, 36.644, 36.569, 35.691, 35.139, 35.372],
+    'longitude': [-119.063, -118.769, -120.301, -119.836, -120.263, -119.607, -120.878, -120.749, -119.579, -119.462, -120.043]
+}
+df = pd.DataFrame(data)
+
+# Convert DataFrame to GDAL-compatible spatial points
+driver = ogr.GetDriverByName("Memory")
+data_source = driver.CreateDataSource("temp_data")
+layer = data_source.CreateLayer("points_layer", geom_type=ogr.wkbPoint)
+
+for idx, row in df.iterrows():
+    feature = ogr.Feature(layer.GetLayerDefn())
+    point = ogr.Geometry(ogr.wkbPoint)
+    point.AddPoint(row['longitude'], row['latitude'])
+    feature.SetGeometry(point)
+    layer.CreateFeature(feature)
+    feature = None
+
+# Step 2: Define raster properties using provided parameters
+# -tr 1000 1000 -te -208964.104 -394240.367 136035.896 31759.633 -a_srs EPSG:3310
+x_res, y_res = 1000, 1000
+x_min, y_min, x_max, y_max = -208964.104, -394240.367, 136035.896, 31759.633
+
+# Compute the raster size
+x_size = int((x_max - x_min) / x_res)
+y_size = int((y_max - y_min) / y_res)
+
+# Create a new raster layer
+raster = gdal.GetDriverByName('GTiff').Create('distance_raster.tif', x_size, y_size, 1, gdal.GDT_Float32)
+raster.SetGeoTransform((x_min, x_res, 0, y_max, 0, -y_res))
+
+# Set projection to EPSG:3310
+srs = osr.SpatialReference()
+srs.ImportFromEPSG(3310)
+raster.SetProjection(srs.ExportToWkt())
+
+# Step 3: Rasterize points to create a binary raster
+gdal.RasterizeLayer(raster, [1], layer, burn_values=[1])
+
+# Step 4: Compute distances using GDAL Proximity
+dist_raster = gdal.GetDriverByName('GTiff').Create('dist_to_points.tif', x_size, y_size, 1, gdal.GDT_Float32)
+dist_raster.SetGeoTransform(raster.GetGeoTransform())
+dist_raster.SetProjection(raster.GetProjection())
+
+gdal.ComputeProximity(raster.GetRasterBand(1), dist_raster.GetRasterBand(1), ['VALUES=1'])
+
+# Close and clean up
+raster = None
+dist_raster = None
+data_source = None
+```
+This didn't quite work. Trying something else
+```
+import numpy as np
+import pandas as pd
+from osgeo import ogr, osr, gdal
+
+# Step 1: Prepare your spatial points data
+data = {
+    'latitude': [35.366, 35.354, 35.85, 35.174, 36.187, 35.375, 36.644, 36.569, 35.691, 35.139, 35.372],
+    'longitude': [-119.063, -118.769, -120.301, -119.836, -120.263, -119.607, -120.878, -120.749, -119.579, -119.462, -120.043]
+}
+df = pd.DataFrame(data)
+
+# Convert DataFrame to GDAL-compatible spatial points
+driver = ogr.GetDriverByName("Memory")
+data_source = driver.CreateDataSource("temp_data")
+
+# Set spatial reference for the layer
+srs = osr.SpatialReference()
+srs.ImportFromEPSG(3310)
+
+layer = data_source.CreateLayer("points_layer", srs, geom_type=ogr.wkbPoint)
+
+def add_points_to_layer(df, layer):
+    for idx, row in df.iterrows():
+        feature = ogr.Feature(layer.GetLayerDefn())
+        point = ogr.Geometry(ogr.wkbPoint)
+        point.AddPoint(row['longitude'], row['latitude'])
+        feature.SetGeometry(point)
+        layer.CreateFeature(feature)
+        feature = None
+
+# Call the function to add points
+add_points_to_layer(df, layer)
+
+# Verify points were added correctly
+print("Points added to the layer:")
+layer.ResetReading()
+for feature in layer:
+    geom = feature.GetGeometryRef()
+    print(geom.ExportToWkt())  # Print each point's WKT
+
+
+# Step 2: Define raster properties using provided parameters
+x_res, y_res = 1000, 1000
+x_min, y_min, x_max, y_max = -208964.104, -394240.367, 136035.896, 31759.633
+
+# Compute the raster size
+x_size = int((x_max - x_min) / x_res)
+y_size = int((y_max - y_min) / y_res)
+
+# Create a new raster layer
+raster = gdal.GetDriverByName('GTiff').Create('distance_raster.tif', x_size, y_size, 1, gdal.GDT_Float32)
+raster.SetGeoTransform((x_min, x_res, 0, y_max, 0, -y_res))
+
+# Set projection to EPSG:3310
+raster.SetProjection(srs.ExportToWkt())
+
+# Step 3: Rasterize points to create a binary raster
+gdal.RasterizeLayer(raster, [1], layer, burn_values=[1])
+
+# Verify rasterization by checking pixel values
+raster_band = raster.GetRasterBand(1)
+raster_data = raster_band.ReadAsArray()
+print(np.unique(raster_data))  # Print unique values in the raster to ensure points are rasterized
+
+# Step 4: Compute distances using GDAL Proximity
+dist_raster = gdal.GetDriverByName('GTiff').Create('dist_to_points.tif', x_size, y_size, 1, gdal.GDT_Float32)
+dist_raster.SetGeoTransform(raster.GetGeoTransform())
+dist_raster.SetProjection(raster.GetProjection())
+
+gdal.ComputeProximity(raster.GetRasterBand(1), dist_raster.GetRasterBand(1), ['VALUES=1'])
+
+# Close and clean up
+raster = None
+dist_raster = None
+data_source = None
+```
+Still the same isue. trying again
+```
+import numpy as np
+import pandas as pd
+from osgeo import ogr, osr, gdal
+
+# Step 1: Prepare your spatial points data
+data = {
+    'latitude': [35.366, 35.354, 35.85, 35.174, 36.187, 35.375, 36.644, 36.569, 35.691, 35.139, 35.372],
+    'longitude': [-119.063, -118.769, -120.301, -119.836, -120.263, -119.607, -120.878, -120.749, -119.579, -119.462, -120.043]
+}
+df = pd.DataFrame(data)
+
+# Convert DataFrame to GDAL-compatible spatial points
+driver = ogr.GetDriverByName("Memory")
+data_source = driver.CreateDataSource("temp_data")
+
+# Set spatial reference for the layer
+srs = osr.SpatialReference()
+srs.ImportFromEPSG(3310)  # NAD83 / California Albers
+
+layer = data_source.CreateLayer("points_layer", srs, geom_type=ogr.wkbPoint)
+
+def add_points_to_layer(df, layer):
+    for idx, row in df.iterrows():
+        feature = ogr.Feature(layer.GetLayerDefn())
+        point = ogr.Geometry(ogr.wkbPoint)
+        point.AddPoint(row['longitude'], row['latitude'])
+        feature.SetGeometry(point)
+        layer.CreateFeature(feature)
+        feature = None
+
+# Call the function to add points
+add_points_to_layer(df, layer)
+
+# Verify points were added correctly
+print("Points added to the layer:")
+layer.ResetReading()
+for feature in layer:
+    geom = feature.GetGeometryRef()
+    print(geom.ExportToWkt())  # Print each point's WKT
+
+# Step 2: Define raster properties using provided parameters
+x_res, y_res = 1000, 1000
+x_min, y_min, x_max, y_max = -208964.104, -394240.367, 136035.896, 31759.633
+
+# Compute the raster size
+x_size = int((x_max - x_min) / x_res)
+y_size = int((y_max - y_min) / y_res)
+
+# Create a new raster layer
+raster = gdal.GetDriverByName('GTiff').Create('distance_raster.tif', x_size, y_size, 1, gdal.GDT_Float32)
+raster.SetGeoTransform((x_min, x_res, 0, y_max, 0, -y_res))
+raster.SetProjection(srs.ExportToWkt())
+
+# Step 3: Rasterize points to create a binary raster
+gdal.RasterizeLayer(raster, [1], layer, burn_values=[1])
+
+# Verify rasterization by checking pixel values
+raster_band = raster.GetRasterBand(1)
+raster_data = raster_band.ReadAsArray()
+print("Unique values in the raster after rasterization:", np.unique(raster_data))  # Ensure points are rasterized
+
+# Optional: Save the raster data to check visually
+import matplotlib.pyplot as plt
+plt.imshow(raster_data, cmap='viridis')
+plt.colorbar()
+plt.title('Rasterized Points')
+plt.savefig('rasterized_points.png')
+
+# Step 4: Compute distances using GDAL Proximity
+dist_raster = gdal.GetDriverByName('GTiff').Create('dist_to_points.tif', x_size, y_size, 1, gdal.GDT_Float32)
+dist_raster.SetGeoTransform(raster.GetGeoTransform())
+dist_raster.SetProjection(raster.GetProjection())
+
+gdal.ComputeProximity(raster.GetRasterBand(1), dist_raster.GetRasterBand(1), ['VALUES=1'])
+
+# Verify the distance raster
+dist_band = dist_raster.GetRasterBand(1)
+dist_data = dist_band.ReadAsArray()
+print("Unique values in the distance raster:", np.unique(dist_data))
+
+# Optional: Save the distance raster data to check visually
+plt.imshow(dist_data, cmap='viridis')
+plt.colorbar()
+plt.title('Distance to Nearest Point')
+plt.savefig('distance_to_points.png')
+
+# Close and clean up
+raster = None
+dist_raster = None
+data_source = None
+
+```
+
+
