@@ -33,24 +33,16 @@ Load and plot the raster files
 #kfsuit <- rast("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/Radish/KitFox-ESARPmodel-Raster1000x1000-FillAllCells.tif")
 #kfsuit <- rast("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/ESRP-kfsuit-continuous-modified-reprojected-1000x1000.tif")
 kfsuit <- rast("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/ESRP-kfsuit-continuous-modified-gdal-5-reprojected-1000x1000-nodata.tif")
-png("kfsuit-20240711.png", width = 800, height = 600)
+png("kfsuit-20240723.png", width = 800, height = 600)
 terra::plot(kfsuit)
 dev.off()
 
-#roads <- rast("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/InterstateHwy5_rasterized_rescaled_road10.tif")
 roads <- rast("/group/ctbrowngrp2/sophiepq/KitFoxGBS/LandGenR/InterstateHwy5_rasterized.tif")
-png("roads-20240711.png", width = 800, height = 600)
+png("roads-20240723.png", width = 800, height = 600)
 terra::plot(roads)
 dev.off()
 ```
 
-merge the two raster layers together
-```
-merged_raster <- merge(kfsuit, roads)
-png("merged_raster-20240711.png", width = 800, height = 600)
-terra::plot(merged_raster)
-dev.off()
-```
 
 let's make some mock data points that will be "centroids" of the subpops. I'll replace these later.
 ```
@@ -74,24 +66,17 @@ Convert to SpatialPointsDataFrame
 sites.spdf <- SpatialPointsDataFrame(sites.sp, data=df)
 ```
 
-plot it
-```
-png("myRasterPlot_20240711.png", width = 800, height = 600)
-terra::plot(merged_raster[[1]])
-terra::points(points, pch=21, col="black", bg="white", cex=2)
-dev.off()
-```
 Create a cost surface
 ```
 kfsuit.cost <- (100-kfsuit[[1]])*0.5
 roads.cost <- roads[[1]]*50
 
-png("kfsuit.CostSurface-20240711.png", width = 800, height = 600)
+png("kfsuit.CostSurface-20240722.png", width = 800, height = 600)
 terra::plot(kfsuit.cost[[1]])
 terra::points(points, pch=21, col="black", bg="white", cex=2)
 dev.off()
 
-png("roads.CostSurface-20240711.png", width = 800, height = 600)
+png("roads.CostSurface-20240722.png", width = 800, height = 600)
 terra::plot(roads.cost[[1]])
 terra::points(points, pch=21, col="black", bg="white", cex=2)
 dev.off()
@@ -101,12 +86,12 @@ Create a conductance surface
 kfsuit.conductance <- (kfsuit[[1]])*0.5
 roads.conductance <- (1-roads[[1]])*50
 
-png("kfsuit.ConductanceSurface-20240711.png", width = 800, height = 600)
+png("kfsuit.ConductanceSurface-20240722.png", width = 800, height = 600)
 terra::plot(kfsuit.conductance[[1]])
 terra::points(points, pch=21, col="black", bg="white", cex=2)
 dev.off()
 
-png("roads.ConductanceSurface-20240711.png", width = 800, height = 600)
+png("roads.ConductanceSurface-20240722.png", width = 800, height = 600)
 terra::plot(roads.conductance[[1]])
 terra::points(points, pch=21, col="black", bg="white", cex=2)
 dev.off()
@@ -114,9 +99,9 @@ dev.off()
 Create a single landscape conductance raster and plot it
 ```
 conductance1 <- (kfsuit.conductance + roads.conductance)
-conductance1 <- (kfsuit.conductance)
+#conductance1 <- (kfsuit.conductance)
 
-png("KF.ConductanceSurface-20240711.png", width = 800, height = 600)
+png("KF.ConductanceSurface-FullModel-20240722.png", width = 800, height = 600)
 terra::plot(conductance1[[1]])
 terra::points(points, pch=21, col="black", bg="white", cex=2)
 dev.off()
@@ -145,7 +130,7 @@ cor(genDist, geoDist)
 tr.cost1 <- gdistance::transition(raster::raster(conductance1), transitionFunction=mean, directions=8) 
 tr.cost1
 
-png("KF.TransissionLayer-20240711.png", width = 800, height = 600)
+png("KF.TransissionLayer-20240722.png", width = 800, height = 600)
 par(mar=c(2,2,1,1))
 raster::plot(raster::raster(tr.cost1))
 dev.off()
@@ -156,22 +141,8 @@ trC.cost1 <- gdistance::geoCorrection(tr.cost1,type = "c",multpl=FALSE)
 trR.cost1 <- gdistance::geoCorrection(tr.cost1,type = "r",multpl=FALSE)
 ```
 ### Plot shortest paths in space
-
-Start by plotting the shortest path between two points
 ```
-png("kf-cost-shortestpath-20240711.png", width = 800, height = 600)
-par(mar=c(2,2,1,2))
-AtoB <- gdistance::shortestPath(trC.cost1, origin=sites.spdf[1,], 
-                                goal=sites.spdf[2,], output="SpatialLines")
-raster::plot(raster::raster(trC.cost1), xlab="x coordinate (m)", 
-             ylab="y coordinate (m)",legend.lab="Conductance")
-lines(AtoB, col="red", lwd=2)
-points(sites.spdf[1:2,])
-dev.off()
-```
-What about for all of them!
-```
-png("kf-cost-shortestpathAll-20240711.png", width = 800, height = 600)
+png("kf-cost-shortestpathAll-20240722.png", width = 800, height = 600)
 par(mar=c(2,2,1,2))
 raster::plot(raster::raster(trC.cost1), xlab="x coordinate (m)", 
              ylab="y coordinate (m)", legend.lab="Conductance")
@@ -223,7 +194,7 @@ comm1.dist_vector <- as.numeric(comm1.dist)
 dist_df <- data.frame("cost1.dist" = cost1.dist_vector,
                       "comm1.dist" = comm1.dist_vector)
 
-png("CorrPlot-20240711.png", width = 800, height = 600)
+png("CorrPlot-CostComm-20240722.png", width = 800, height = 600)
 plot(dist_df$comm1.dist, dist_df$cost1.dist, xlab = "Commute Distance", ylab = "Cost Distance", main = "Correlation Plot")
 dev.off()
 ```
@@ -371,8 +342,67 @@ Permutation: free
 Number of permutations: 9999
 ```
 
+## Compare Models
+```
+# Perform Mantel tests for least-cost distance and commute distance vs genetic distance
+mantel_geo_gen <- mantel(as.dist(geoDist), genDist, method="pearson", permutations=999)
+print(mantel_geo_gen)
 
-## What if I remove baskersfield and bena???
+mantel_cost_gen <- mantel(as.dist(cost1.dist), genDist, method="pearson", permutations=9999)
+print(mantel_cost_gen)
+
+mantel_comm_gen <- mantel(as.dist(comm1.dist), genDist, method="pearson", permutations=9999)
+print(mantel_comm_gen)
+
+# Statistical comparison of Mantel statistics
+set.seed(123)
+permutations <- 999
+
+mantel_diff <- function(matrix1, model1, model2, permutations) {
+  matrix1 <- as.matrix(matrix1) # Convert distance objects to matrices
+  model1 <- as.matrix(model1)
+  model2 <- as.matrix(model2)
+  diff_stats <- numeric(permutations)
+  for (i in 1:permutations) {
+    permuted <- sample(nrow(matrix1))
+    mantel1 <- mantel(as.dist(matrix1[permuted, permuted]), as.dist(model1), method = "pearson", permutations = 0)$statistic
+    mantel2 <- mantel(as.dist(matrix1[permuted, permuted]), as.dist(model2), method = "pearson", permutations = 0)$statistic
+    diff_stats[i] <- mantel1 - mantel2
+  }
+  return(diff_stats)
+}
+
+### Compute the difference in Mantel statistics with bootstrapping
+diff_stats_geo_cost <- mantel_diff(genDist, as.dist(geoDist), as.dist(cost1.dist), permutations)
+diff_stats_geo_comm <- mantel_diff(genDist, as.dist(geoDist), as.dist(comm1.dist), permutations)
+diff_stats_cost_comm <- mantel_diff(genDist, as.dist(cost1.dist), as.dist(comm1.dist), permutations)
+
+### Observed difference in Mantel statistics
+observed_diff_geo_cost <- mantel_geo_gen$statistic - mantel_cost_gen$statistic
+observed_diff_geo_comm <- mantel_geo_gen$statistic - mantel_comm_gen$statistic
+observed_diff_cost_comm <- mantel_cost_gen$statistic - mantel_comm_gen$statistic
+
+### Calculate p-value
+p_value_geo_cost <- sum(abs(diff_stats_geo_cost) >= abs(observed_diff_geo_cost)) / permutations
+p_value_geo_comm <- sum(abs(diff_stats_geo_comm) >= abs(observed_diff_geo_comm)) / permutations
+p_value_cost_comm <- sum(abs(diff_stats_cost_comm) >= abs(observed_diff_cost_comm)) / permutations
+
+### Print the observed difference and p-value
+cat("P-value (geo vs cost):", p_value_geo_cost, "\n")
+# P-value (geo vs cost): 0.8218218 
+cat("Observed difference in Mantel statistics (geo vs commute):", observed_diff_geo_comm, "\n")
+# Observed difference in Mantel statistics (geo vs commute): 0.01282938 
+cat("P-value (geo vs commute):", p_value_geo_comm, "\n")
+# P-value (geo vs commute): 0.9049049 
+cat("Observed difference in Mantel statistics (cost vs commute):", observed_diff_cost_comm, "\n")
+# Observed difference in Mantel statistics (cost vs commute): 0.01763121 
+cat("P-value (cost vs commute):", p_value_cost_comm, "\n")
+# P-value (cost vs commute): 0.8598599 
+```
+**Summary:**  For the Full Model (kfsuit + roads) neither cost distance nor commute distance predicts genetic distance better than the null model. 
+
+
+# What if I remove baskersfield and bena???
 ```
 df <- data.frame(lon = c(-120.301, -119.836, -120.263, -119.607, -120.878, -120.749, -119.579, -119.462, -120.043), lat = c(35.85, 35.174, 36.187, 35.375, 36.644, 36.569, 35.691, 35.139, 35.372), SiteName = c("CalFlats", "Carrizo", "Coalinga", "Lokern", "Panoche-North", "Panoche-South", "Semitropic", "Taft", "Topaz"))
 ```
@@ -585,4 +615,10 @@ dev.off()
 png("GenDist_vs_CommDist_fullmodel_noBakersBena_20240711.png", width = 800, height = 600)
 plot(comm1.dist, genDist, xlab = "Commute Distance", ylab = "Genetic Distance", main = "Genetic Distance vs. Commute Distance")
 dev.off()
+```
+
+## Compare Models Using Partial Mantel Test
+```
+result <- mantel.partial(genDist, geoDist, cost1.dist, method = "pearson",  permutations = 999)
+
 ```
