@@ -229,6 +229,9 @@ genotypes = imp.fit_transform((np.array(G)).T)
 ##(Note I ran this plink command to subset the broader KF plink file and remove monomorphic sites)
 ##plink --bfile AllKF --keep SJKF_list.txt --allow-extra-chr --maf 0.05 --make-bed --out SJKF
 
+##(I'm also going to run another one that looks at a subset of the data that is comparable to the "subpops" I explore in downstream analyses.
+##plink --bfile AllKF --keep SJKF_subpop_list.txt --allow-extra-chr --maf 0.05 --make-bed --out SJKF_subpop
+
 ## SJKF Data ##
 (bim, fam, G) = read_plink("{}/SJKF".format(data_path))
 imp = SimpleImputer(missing_values=np.nan, strategy="mean")
