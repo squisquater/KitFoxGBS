@@ -1,4 +1,4 @@
-**Install Conda if you don’t already have it**
+## Install Conda
 
 I would recommend using [mamba](https://mamba.readthedocs.io/en/latest/) instead. It has all the same functionality but is **WAY** faster. I use micromamba which is a specific “flavor” of mamba but would recommend using just mamba. So basically I use conda/mamba /micromamba interchangeably below. Use the command associated with what you decide to install. They’ll all work.
 
