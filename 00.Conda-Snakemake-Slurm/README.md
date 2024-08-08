@@ -8,7 +8,7 @@ I would recommend using [mamba](https://mamba.readthedocs.io/en/latest/) instead
 
 ## Create & Activate the Conda Environment + Install Necessary Packages
 
-To create a conda environment that will contain all the software you need to process your GBS data (including snakemake!) you can use the config file [GBS_config.yml]()
+To create a conda environment that will contain all the software you need to process your GBS data (including snakemake!) you can use this config file [GBS_config.yml](00.Conda-Snakemake-Slurm/GBS_config.yml)
 
 Once you have this file you can create your conda environment
 ```
