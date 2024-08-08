@@ -1,4 +1,4 @@
-name: GBS_test
+name: GBS
 channels:
 - anaconda
 - bioconda
