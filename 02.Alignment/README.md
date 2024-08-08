@@ -21,7 +21,7 @@ You'll want to make sure you download that as well and keep it in the same direc
 
 Once you have all the necessary files and have modified the filepaths (and any settings you want to change) in the [**snakefile_alignPE.yml**]() config file. You can run the pipeline with the following commands
 
-If you haven't already created a conda environment and configured your slurm profile see [00.Conda-Snakemake-Slurm]()
+If you haven't already created a conda environment and configured your slurm profile see [**00.Conda-Snakemake-Slurm**]()
 ```
 # I like to run this using screen
 screen -S GBSworkflow
