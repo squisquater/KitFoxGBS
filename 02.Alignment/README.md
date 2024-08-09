@@ -35,3 +35,11 @@ snakemake -s 01.snakefile_alignPE --profile slurm -n -r
 # If everything looks good (lots of green and yellow printout — no red) you can execute the pipeline. Here you can see I set the number of jobs to 20, overriding the default 100 that is in my slurm profile because the alignment can be pretty computationally intensive and I don’t want to eat up too many resources on farm at once.
 snakemake -s 01.snakefile_alignPE --profile slurm -j 20
 ```
+
+Started running at 13:54 on 20240708 --> Finished at XX:XX on 202407XX
+
+* Most of this pipeline will run fairly quickly. The IBS analysis (rule 'test_replicates') that double checks replicates does take some time because it uses angsd to actually call SNPS.
+
+* Once the pipeline has generated the merged bam files (rule 'merge_bams_per_sample') you can theoretically move on to the next step without waiting for the IBS analysis to complete.
+
+* 
