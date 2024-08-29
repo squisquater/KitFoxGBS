@@ -9,13 +9,18 @@ You shouldn’t need to modify anything in the snakefile unless you want to twea
 <img align="center" src="02.Alignment-DAG.png" width="800"> 
 
 
-## REQUIRED ACCESSORY FILES
+## REQUIRED ACCESSORY SCRIPTS
 
 Part of this pipeline also relies on an accessory R script -> [**compare_replicates.R**]() \
 You'll want to make sure you download that as well and keep it in the same directory as your snakemake and .yml files.
 
 ## OTHER NECESSARY INPUT FILES
-* In order to run this pipeline all you need is the file called [**samples.txt**]() which has no headers and 2 columns. The first column has the sample ID associated with the fastqfile. The second column has the library ID associated with the fastq file. Note that these might be the same if you don’t have any replicates in your data, but if a single sample (individual) had multiple sequencing replcates there may be several unique library IDs with the same sample ID. Ultimately this pipeline will merge those into a single output bam file. Additionally, if you have a weird file naming convention in your fastq files and want to modify it in the .bam files this is a good place to do that.
+* In order to run this pipeline you need a file called [**samples.txt**]() which has no headers and 2 columns. The first column has the sample ID associated with the fastqfile. The second column has the library ID associated with the fastq file. Note that these might be the same if you don’t have any replicates in your data, but if a single sample (individual) had multiple sequencing replcates there may be several unique library IDs with the same sample ID. Ultimately this pipeline will merge those into a single output bam file. Additionally, if you have a weird file naming convention in your fastq files and want to modify it in the .bam files this is a good place to do that.
+You also need:
+* indexed **.fastq files** (this pipeline relies on the naming convention 'LibraryName.assembled.fastq') if your fastq files do not follow this convention you may need to modify the snakefile. 
+* An indexed **reference genome**
+* A **.bed file** listing all of the autosomes
+* **The name of the X chromosome** (This last one is just usefult for generating sex chromosome depth relative to autosomal depth for inferring genetic sex. If you don't haev this info just put another random chromosome name and ignore the outputted depth column.
 
 * Note that Snakemake will make any listed directories for you so no need to do that head of time.
 
@@ -36,10 +41,6 @@ snakemake -s 01.snakefile_alignPE --profile slurm -n -r
 snakemake -s 01.snakefile_alignPE --profile slurm -j 20
 ```
 
-Started running at 13:54 on 20240708 --> Finished at XX:XX on 202407XX
-
 * Most of this pipeline will run fairly quickly. The IBS analysis (rule 'test_replicates') that double checks replicates does take some time because it uses angsd to actually call SNPS.
 
 * Once the pipeline has generated the merged bam files (rule 'merge_bams_per_sample') you can theoretically move on to the next step without waiting for the IBS analysis to complete.
-
-* 
