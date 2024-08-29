@@ -29,7 +29,7 @@ Once you have all the necessary files and have modified the filepaths (and any s
 If you haven't already created a conda environment and configured your slurm profile see [**00.Conda-Snakemake-Slurm**](/00.Conda-Snakemake-Slurm)
 ```
 # I like to run this using screen
-screen -S GBSworkflow
+screen -S AlignmentWorkflow
 
 # Load the conda environment
 micromamba activate GBS
