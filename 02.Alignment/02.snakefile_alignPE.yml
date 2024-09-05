@@ -1,0 +1,26 @@
+######### UPDATE ACCORDING TO YOUR PROJECT #########
+
+# Project Directory
+home_dir: "/group/ctbrowngrp4/2024-sophiepq-kitfoxGBS/PipelineTest-20240905" ## Directory containing all output files for the project
+
+# Data Directory
+data_dir: "/group/ctbrowngrp2/sophiepq/KitFoxGBS/fastq_files.PE" ## Directory containing all fastq files
+
+# Sample File
+sample_file: "/group/ctbrowngrp4/2024-sophiepq-kitfoxGBS/PipelineTest-20240905/SJKF_cleaned_samples_n484.txt" ## Path to your sample.txt file which contains 2 columns (no headers)
+## Column 1: Sample name
+## Column 2: Library name
+#There may be multiple libraries per sample, but each library must be on a separate line. This will be used to merge the bam files for each sample.
+
+# Reference file
+reference_file: "/group/ctbrowngrp2/cbquinn/fox4/ref/GCF_018345385.1/GCF_018345385.1_ASM1834538v1_genomic.fna" ## Location of your Reference Genome
+reference_nickname: "Vulp.lag" ## Nickname for your reference genome 
+x_chromosome: "NC_054848.1" ## Name of your X chromosome (haven't tested the pipline if you don't have this information) Maybe choose a random scaffold and just ignore that info in the summary file. 
+autosomes: "/group/ctbrowngrp2/cbquinn/fox4/ref/GCF_018345385.1/autosomes.bed" ## Location of your bedfile (you can make this if you don't have one.)
+
+# Other settings
+
+# Samtools parameters (modify if you want to change the minimum mapping quality)
+samtools:
+  flag: 4 ## Flag for samtools view that removes unmapped reads
+  mapq: 20 ## Minimum mapping quality for samtools view
